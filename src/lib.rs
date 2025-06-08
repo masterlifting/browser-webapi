@@ -30,7 +30,7 @@ pub async fn run_server() -> std::io::Result<()> {
         actix_web::App::new()
             .wrap(TracingLogger::default())
             .wrap(cors)
-            .configure(routes::configure_routes)
+            .configure(routes::configure)
     })
     .bind(format!("{}:{}", host, port))?
     .run()
