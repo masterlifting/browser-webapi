@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  browser_automation_api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - SERVER_HOST=0.0.0.0
+      - SERVER_PORT=8080
+      - LOG_LEVEL=info
+      - RUST_LOG=info
+    restart: unless-stopped
+    security_opt:
+      - seccomp=unconfined  # Needed for Chrome in Docker
+    shm_size: '2gb'  # Increase shared memory for Chrome
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
