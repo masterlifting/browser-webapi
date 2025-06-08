@@ -7,7 +7,7 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 pub async fn run_server() -> std::io::Result<()> {
     dotenv::dotenv().ok();
 
-    let host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.1".to_string());
+    let host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
     let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8080".to_string());
     let log_level = env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string());
 
