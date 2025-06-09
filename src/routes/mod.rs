@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, web};
 
-mod browser;
+pub mod browser;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
