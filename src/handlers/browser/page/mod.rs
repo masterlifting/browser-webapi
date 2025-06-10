@@ -1,6 +1,3 @@
-pub mod models::browser;
-pub mod models::browser::page;
-
 use actix_web::{HttpResponse, web};
 use headless_chrome::{Browser, LaunchOptions, Tab};
 use lazy_static::lazy_static;
@@ -12,6 +9,15 @@ use std::sync::Mutex;
 use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
+
+use crate::models::{
+    Error, Response,
+    browser::page::{
+        FormSubmitRequest, GenericResponse, InputFillRequest, LoadRequest, LoadResponse,
+        MouseClickRequest, MouseShuffleRequest, Selector, TextFindRequest, TextFindResponse,
+    },
+    browser::{BrowserSession, SessionRequest},
+};
 
 fn get_browser() -> Result<Arc<Browser>, String> {
     Browser::new(LaunchOptions::default())

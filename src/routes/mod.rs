@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, web};
 
-pub mod browser;
+use crate::handlers::browser;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
@@ -15,6 +15,20 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                     }))
                 }),
             )
-            .service(browser::configure()),
+            .service(
+                web::scope("/browser").service(
+                    web::scope("/page")
+                        .route("/load", web::post().to(browser::page::load))
+                        .route("/close", web::post().to(browser::page::close))
+                        .route("/text/find", web::post().to(browser::page::find_text))
+                        .route("/input/fill", web::post().to(browser::page::fill_input))
+                        .route("/mouse/click", web::post().to(browser::page::mouse_click))
+                        .route(
+                            "/mouse/shuffle",
+                            web::post().to(browser::page::mouse_shuffle),
+                        )
+                        .route("/form/submit", web::post().to(browser::page::form_submit)),
+                ),
+            ),
     );
 }

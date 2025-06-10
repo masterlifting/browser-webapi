@@ -1,3 +1,9 @@
+pub mod handlers {
+    pub mod browser {
+        pub mod page;
+    }
+}
+pub(crate) mod models;
 pub(crate) mod routes;
 
 use std::env;

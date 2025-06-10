@@ -1,35 +1,37 @@
 use serde::{Deserialize, Serialize};
 
+use crate::models::browser::Session;
+
 #[derive(Deserialize)]
-struct Selector {
+pub struct Selector {
     value: String,
 }
 
 #[derive(Deserialize)]
-struct LoadRequest {
+pub struct LoadRequest {
     url: String,
 }
 
 #[derive(Serialize)]
-struct LoadResponse {
-    session: BrowserSession,
+pub struct LoadResponse {
+    session: Session,
     url: String,
 }
 
 #[derive(Deserialize)]
-struct TextFindRequest {
+pub struct TextFindRequest {
     session_id: String,
     page_id: String,
     selector: Selector,
 }
 
 #[derive(Serialize)]
-struct TextFindResponse {
+pub struct TextFindResponse {
     text: Option<String>,
 }
 
 #[derive(Deserialize)]
-struct InputFillRequest {
+pub struct InputFillRequest {
     session_id: String,
     page_id: String,
     selector: Selector,
@@ -37,7 +39,7 @@ struct InputFillRequest {
 }
 
 #[derive(Deserialize)]
-struct MouseClickRequest {
+pub struct MouseClickRequest {
     session_id: String,
     page_id: String,
     selector: Selector,
@@ -46,7 +48,7 @@ struct MouseClickRequest {
 
 #[derive(Deserialize)]
 #[serde(tag = "type")]
-enum WaitForOption {
+pub enum WaitForOption {
     #[serde(rename = "url")]
     Url { pattern: String },
     #[serde(rename = "selector")]
@@ -56,14 +58,14 @@ enum WaitForOption {
 }
 
 #[derive(Deserialize)]
-struct MouseShuffleRequest {
+pub struct MouseShuffleRequest {
     session_id: String,
     page_id: String,
     period_ms: u64,
 }
 
 #[derive(Deserialize)]
-struct FormSubmitRequest {
+pub struct FormSubmitRequest {
     session_id: String,
     page_id: String,
     selector: Selector,
