@@ -10,23 +10,21 @@ use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
 
-use crate::models::{
-    Error, Response,
-    browser::page::{
-        FormSubmitRequest, GenericResponse, InputFillRequest, LoadRequest, LoadResponse,
-        MouseClickRequest, MouseShuffleRequest, Selector, TextFindRequest, TextFindResponse,
+use crate::browser::{
+    models::{Session, SessionRequest, SessionResponse},
+    page::models::{
+        FormSubmitRequest, InputFillRequest, LoadRequest, LoadResponse, MouseClickRequest,
+        MouseShuffleRequest, Selector, TextFindRequest, TextFindResponse, WaitForOption,
     },
-    browser::{BrowserSession, SessionRequest},
 };
+use crate::models::{Error, Response};
 
-fn get_browser() -> Result<Arc<Browser>, String> {
-    Browser::new(LaunchOptions::default())
-        .map_err(|e| format!("Failed to launch browser: {}", e))
-        .map(Arc::new)
+lazy_static! {
+    static ref SESSIONS: Mutex<HashMap<String, Arc<Tab>>> = Mutex::new(HashMap::new());
 }
 
-fn get_page_session(session_id: &str, page_id: &str) -> Result<Arc<Tab>, String> {
-    let pages = PAGE_SESSIONS.lock().unwrap();
+fn get_session(session_id: &str, page_id: &str) -> Result<Arc<Tab>, String> {
+    let pages = SESSIONS.lock().unwrap();
     pages
         .get(page_id)
         .cloned()
@@ -53,7 +51,7 @@ fn try_find_element(
 
 // Route handlers
 async fn load(req: web::Json<LoadRequest>) -> HttpResponse {
-    let browser_result = get_browser();
+    let browser_result = init_browser();
 
     match browser_result {
         Ok(browser) => {

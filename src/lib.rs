@@ -1,10 +1,13 @@
-pub mod handlers {
-    pub mod browser {
-        pub mod page;
+pub mod browser {
+    pub mod handlers;
+    pub mod models;
+    pub mod page {
+        pub mod handlers;
+        pub mod models;
     }
 }
-pub(crate) mod models;
-pub(crate) mod routes;
+pub mod models;
+pub mod routes;
 
 use std::env;
 use tracing_actix_web::TracingLogger;

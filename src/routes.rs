@@ -1,6 +1,6 @@
 use actix_web::{HttpResponse, web};
 
-use crate::handlers::browser;
+use crate::browser;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(

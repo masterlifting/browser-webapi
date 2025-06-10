@@ -1,8 +1,8 @@
-use actix_web::{App, HttpServer, middleware, web};
 use actix_cors::Cors;
-use dotenv::dotenv;
-use tracing_actix_web::TracingLogger;
+use actix_web::{App, HttpServer, middleware, web};
+use dotenv;
 use std::env;
+use tracing_actix_web::TracingLogger;
 
 mod routes;
 
@@ -10,20 +10,21 @@ mod routes;
 async fn main() -> std::io::Result<()> {
     // Load environment variables from .env file
     dotenv().ok();
-    
+
     // Initialize tracing
     tracing_subscriber::fmt()
         .with_max_level(tracing::Level::INFO)
         .init();
-    
+
     // Get configuration from environment or use defaults
     let host = env::var("HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
-    let port = env::var("PORT").unwrap_or_else(|_| "8080".to_string())
+    let port = env::var("PORT")
+        .unwrap_or_else(|_| "8080".to_string())
         .parse::<u16>()
         .expect("PORT must be a number");
-    
+
     tracing::info!("Starting server at http://{}:{}", host, port);
-    
+
     // Start HTTP server
     HttpServer::new(|| {
         // Configure CORS
@@ -32,7 +33,7 @@ async fn main() -> std::io::Result<()> {
             .allow_any_method()
             .allow_any_header()
             .max_age(3600);
-        
+
         App::new()
             .wrap(TracingLogger::default())
             .wrap(middleware::Compress::default())
