@@ -9,7 +9,7 @@ pub struct Selector {
 
 #[derive(Deserialize)]
 pub struct LoadRequest {
-    url: String,
+    pub url: String,
 }
 
 #[derive(Serialize)]

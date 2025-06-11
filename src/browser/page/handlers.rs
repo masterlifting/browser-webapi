@@ -1,4 +1,5 @@
 use actix_web::{HttpResponse, web};
+use headless_chrome::browser;
 use headless_chrome::{Browser, LaunchOptions, Tab};
 use lazy_static::lazy_static;
 use regex::Regex;
@@ -23,12 +24,12 @@ lazy_static! {
     static ref SESSIONS: Mutex<HashMap<String, Arc<Tab>>> = Mutex::new(HashMap::new());
 }
 
-fn get_session(session_id: &str, page_id: &str) -> Result<Arc<Tab>, String> {
+fn get_session(page_id: &str) -> Result<Arc<Tab>, Error> {
     let pages = SESSIONS.lock().unwrap();
     pages
         .get(page_id)
         .cloned()
-        .ok_or_else(|| format!("Page session not found: {}", page_id))
+        .ok_or_else(|| Error::NotFound(format!("Session with ID {} not found", page_id)))
 }
 
 fn try_find_element(
@@ -50,70 +51,53 @@ fn try_find_element(
 }
 
 // Route handlers
-async fn load(req: web::Json<LoadRequest>) -> HttpResponse {
-    let browser_result = init_browser();
-
-    match browser_result {
-        Ok(browser) => {
-            match browser.new_tab() {
-                Ok(tab) => {
-                    let url_result = Url::parse(&req.url);
-
-                    match url_result {
-                        Ok(url) => {
-                            match tab.navigate_to(url.as_str()) {
-                                Ok(_) => {
-                                    // Wait for page to load
-                                    if let Err(e) = tab.wait_until_navigated() {
-                                        return HttpResponse::BadRequest().json(ErrorInfo {
-                                            message: format!("Failed to load page: {}", e),
-                                            code: Some("PAGE_NAVIGATION_FAILED".to_string()),
-                                        });
-                                    }
-
-                                    let session_id = Uuid::new_v4().to_string();
-                                    let page_id = Uuid::new_v4().to_string();
-
-                                    // Store sessions
-                                    BROWSER_SESSIONS
-                                        .lock()
-                                        .unwrap()
-                                        .insert(session_id.clone(), browser.clone());
-                                    PAGE_SESSIONS.lock().unwrap().insert(page_id.clone(), tab);
-
-                                    HttpResponse::Ok().json(LoadResponse {
-                                        session: BrowserSession {
-                                            id: session_id,
-                                            page_id,
-                                        },
-                                        url: req.url.clone(),
-                                    })
-                                }
-                                Err(e) => HttpResponse::BadRequest().json(ErrorInfo {
-                                    message: format!("Failed to navigate to URL: {}", e),
-                                    code: Some("URL_NAVIGATION_FAILED".to_string()),
-                                }),
-                            }
-                        }
-                        Err(e) => HttpResponse::BadRequest().json(ErrorInfo {
-                            message: format!("Invalid URL: {}", e),
-                            code: Some("INVALID_URL".to_string()),
-                        }),
-                    }
+async fn load(browser: Arc<Browser>, req: web::Json<LoadRequest>) -> HttpResponse {
+    match Url::parse(&req.url) {
+        Ok(url) => {
+            m
+            let tab = match browser.new_tab() {
+                Ok(tab) => Arc::new(tab),
+                Err(e) => {
+                    return HttpResponse::InternalServerError().json(Error {
+                        message: format!("Failed to create new tab: {}", e),
+                        code: None,
+                    });
                 }
-                Err(e) => HttpResponse::InternalServerError().json(ErrorInfo {
-                    message: format!("Failed to create new tab: {}", e),
-                    code: Some("TAB_CREATION_FAILED".to_string()),
-                }),
+            };
+
+            // Navigate to the URL
+            if let Err(e) = tab.navigate_to(url.as_str()) {
+                return HttpResponse::InternalServerError().json(Error {
+                    message: format!("Failed to navigate to URL: {}", e),
+                    code: None,
+                });
             }
+
+            // Wait for the page to load
+            if let Err(e) = tab.wait_until_navigated() {
+                return HttpResponse::InternalServerError().json(Error {
+                    message: format!("Failed to wait for navigation: {}", e),
+                    code: None,
+                });
+            }
+
+            // Generate a unique session ID
+            let session_id = Uuid::new_v4().to_string();
+            SESSIONS.lock().unwrap().insert(session_id.clone(), Arc::clone(&tab));
+
+            HttpResponse::Ok().json(LoadResponse {
+                session: Session {
+                    id: session_id,
+                    page_id: tab.id(),
+                },
+                url: url.to_string(),
+            })
         }
-        Err(e) => HttpResponse::InternalServerError().json(ErrorInfo {
-            message: format!("Failed to launch browser: {}", e),
-            code: Some("BROWSER_LAUNCH_FAILED".to_string()),
+        Err(e) => HttpResponse::BadRequest().json(Error {
+            message: format!("Invalid URL provided: {}", e),
+            code: None,
         }),
     }
-}
-
 async fn close(req: web::Json<SessionRequest>) -> HttpResponse {
     let result = get_page_session(&req.session_id, &req.page_id);
 

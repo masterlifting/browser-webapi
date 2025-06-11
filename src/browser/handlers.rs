@@ -1,8 +1,15 @@
 use headless_chrome::{Browser, LaunchOptions};
 use std::sync::Arc;
 
-fn launch() -> Result<Arc<Browser>, String> {
+use crate::models::{Error, ErrorInfo};
+
+fn launch() -> Result<Arc<Browser>, Error> {
     Browser::new(LaunchOptions::default())
-        .map_err(|e| format!("Failed to launch browser: {}", e))
         .map(Arc::new)
+        .map_err(|e| {
+            Error::Operation(ErrorInfo {
+                message: format!("Failed to launch browser: {}", e),
+                code: None,
+            })
+        })
 }
