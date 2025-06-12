@@ -16,11 +16,17 @@ impl std::fmt::Display for ErrorInfo {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(tag = "type")]
 pub enum Error {
+  #[serde(rename = "not_found")]
   NotFound(String),
+  #[serde(rename = "not_implemented")]
   NotImplemented(String),
+  #[serde(rename = "not_supported")]
   NotSupported(String),
+  #[serde(rename = "canceled")]
   Canceled(String),
+  #[serde(rename = "operation_error")]
   Operation(ErrorInfo),
 }
 
