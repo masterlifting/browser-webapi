@@ -29,7 +29,7 @@ fn try_find_tab(tab_id: &str) -> Result<Arc<Tab>, Error> {
     .ok_or_else(|| Error::NotFound(format!("Browser tab with ID {} not found", tab_id)))
 }
 
-async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpResponse {
+pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpResponse {
   let parse_url = |url: &str| {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
