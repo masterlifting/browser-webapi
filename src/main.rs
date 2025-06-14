@@ -4,6 +4,7 @@ use dotenv;
 use std::env;
 use tracing_actix_web::TracingLogger;
 
+mod browser;
 mod routes;
 
 #[actix_web::main]
@@ -25,6 +26,9 @@ async fn main() -> std::io::Result<()> {
 
   tracing::info!("Starting server at http://{}:{}", host, port);
 
+  //lunch the browser
+  let browser = browser::launch().unwrap();
+
   // Start HTTP server
   HttpServer::new(|| {
     // Configure CORS
@@ -39,12 +43,6 @@ async fn main() -> std::io::Result<()> {
       .wrap(middleware::Compress::default())
       .wrap(cors)
       .configure(routes::configure)
-      .default_service(web::to(|| async {
-        actix_web::HttpResponse::NotFound().json(serde_json::json!({
-            "error": "Not Found",
-            "message": "The requested resource does not exist"
-        }))
-      }))
   })
   .bind((host, port))?
   .run()

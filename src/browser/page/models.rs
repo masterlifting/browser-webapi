@@ -1,7 +1,5 @@
 use serde::{Deserialize, Serialize};
 
-use crate::models::browser::Session;
-
 #[derive(Deserialize)]
 pub struct Selector {
   value: String,

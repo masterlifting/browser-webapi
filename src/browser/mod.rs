@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::models::{Error, ErrorInfo};
 
-fn launch() -> Result<Arc<Browser>, Error> {
+pub fn launch() -> Result<Arc<Browser>, Error> {
   Browser::new(LaunchOptions::default())
     .map(Arc::new)
     .map_err(|e| {

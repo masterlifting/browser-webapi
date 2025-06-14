@@ -1,3 +1,5 @@
+pub mod models;
+
 use actix_web::{HttpResponse, web};
 use headless_chrome::browser;
 use headless_chrome::{Browser, Tab};
