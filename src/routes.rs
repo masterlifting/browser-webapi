@@ -3,11 +3,8 @@ use std::sync::Arc;
 use actix_web::{HttpResponse, web};
 use headless_chrome::Browser;
 
-pub mod browser;
-use crate::browser::{
-  models::Error,
-  page::{self, models::ErrorInfo},
-};
+use crate::browser;
+use crate::models::Error;
 
 pub fn configure(cfg: &mut web::ServiceConfig, browser: Arc<Browser>) {
   cfg
@@ -63,8 +60,8 @@ pub fn configure(cfg: &mut web::ServiceConfig, browser: Arc<Browser>) {
         ),
     )
     .default_service(web::to(|| async {
-      actix_web::HttpResponse::NotFound().json(serde_json::json!(Error::NotFound(format!(
-        "Endpoint not found"
-      ))))
+      actix_web::HttpResponse::NotFound().json(serde_json::json!(Error::NotFound(
+        "Endpoint not found".to_string()
+      )))
     }));
 }

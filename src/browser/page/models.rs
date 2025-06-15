@@ -8,7 +8,7 @@ pub struct Selector {
 #[derive(Deserialize)]
 pub struct LoadRequest {
   pub url: String,
-  //TODO: Add expectations for the page load
+  //TODO: Add expiration time
 }
 
 #[derive(Serialize)]

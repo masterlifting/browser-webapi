@@ -1,11 +1,12 @@
 pub mod browser {
-  pub mod models;
-  pub mod page {}
+  pub mod page;
 }
+
 pub mod models;
 pub mod routes;
 
 use std::env;
+use std::sync::Arc;
 use tracing_actix_web::TracingLogger;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
@@ -21,6 +22,11 @@ pub async fn run_server() -> std::io::Result<()> {
     .with(tracing_subscriber::fmt::layer())
     .init();
 
+  tracing::info!("Starting server at http://{}:{}", host, port);
+
+  //lunch the browser
+  let browser = browser::launch().unwrap();
+
   actix_web::HttpServer::new(move || {
     let cors = actix_cors::Cors::default()
       .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
@@ -35,7 +41,7 @@ pub async fn run_server() -> std::io::Result<()> {
     actix_web::App::new()
       .wrap(TracingLogger::default())
       .wrap(cors)
-      .configure(routes::configure)
+      .configure(|cfg| routes::configure(cfg, Arc::clone(&browser)))
   })
   .bind(format!("{}:{}", host, port))?
   .run()

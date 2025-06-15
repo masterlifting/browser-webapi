@@ -1,21 +1,15 @@
 pub mod models;
 
 use actix_web::{HttpResponse, web};
-use headless_chrome::browser;
 use headless_chrome::{Browser, Tab};
 use lazy_static::lazy_static;
-use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
 
-use crate::browser::{
-  models::SessionRequest,
-  page::models::{CloseRequest, LoadRequest, LoadResponse},
-};
+use crate::browser::page::models::{LoadRequest, LoadResponse};
 use crate::models::{Error, ErrorInfo};
 
 lazy_static! {
