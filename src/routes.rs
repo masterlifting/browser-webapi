@@ -3,10 +3,9 @@ use std::sync::Arc;
 use actix_web::{HttpResponse, web};
 use headless_chrome::Browser;
 
-use crate::browser;
 use crate::models::Error;
 
-pub fn configure(cfg: &mut web::ServiceConfig, browser: Arc<Browser>) {
+pub fn configure(cfg: &mut web::ServiceConfig) {
   cfg
     .service(
       web::scope("/api/v1")
@@ -25,11 +24,8 @@ pub fn configure(cfg: &mut web::ServiceConfig, browser: Arc<Browser>) {
             web::scope("/page")
               .route(
                 "/load",
-                web::post().to({
-                  move |req| {
-                    let browser = Arc::clone(&browser);
-                    async move { browser::page::load(req, browser).await }
-                  }
+                web::post().to(|req, browser: web::Data<Arc<Browser>>| async move {
+                  crate::browser::page::load(req, browser.get_ref().clone()).await
                 }),
               )
               .route(

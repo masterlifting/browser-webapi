@@ -26,26 +26,26 @@ fn try_find_tab(tab_id: &str) -> Result<Arc<Tab>, Error> {
 }
 
 pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpResponse {
-  let parse_url = |url: &str| {
+  fn parse_url(url: &str) -> Result<Url, Error> {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
         message: format!("Invalid URL: {}", e),
         code: None,
       })
     })
-  };
+  }
 
-  let open_new_tab = |url: Url, browser: Arc<Browser>| {
-    browser.new_tab().map_err(|e| {
+  fn open_new_tab(url: Url, browser: Arc<Browser>) -> Result<(Url, Arc<Tab>), Error> {
+    browser.new_tab().map(|tab| (url, tab)).map_err(|e| {
       Error::Operation(ErrorInfo {
         message: format!("Failed to create new tab: {}", e),
         code: None,
       })
-      .map(|tab| (url, tab))
     })
-  };
+  }
 
-  let navigate_to_url = |tab: Arc<Tab>, url: Url| {
+  fn navigate_to_url(tab: Arc<Tab>, url: Url) -> Result<(Url, Arc<Tab>), Error> {
+    let tab_clone = tab.clone();
     tab
       .navigate_to(&url.as_str())
       .map_err(|e| {
@@ -54,10 +54,11 @@ pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpRes
           code: None,
         })
       })
-      .map(|_| (url, tab))
-  };
+      .map(|_| (url, tab_clone))
+  }
 
-  let wait_for_navigation = |tab: Arc<Tab>, url: Url| {
+  fn wait_for_navigation(tab: Arc<Tab>, url: Url) -> Result<(Url, Arc<Tab>), Error> {
+    let tab_clone = tab.clone();
     tab
       .wait_until_navigated()
       .map_err(|e| {
@@ -66,10 +67,10 @@ pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpRes
           code: None,
         })
       })
-      .map(|_| (url, tab))
-  };
+      .map(|_| (url, tab_clone))
+  }
 
-  let create_response = |url: Url, tab: Arc<Tab>| {
+  fn create_response(url: Url, tab: Arc<Tab>) -> HttpResponse {
     let tab_id = Uuid::new_v4().to_string();
     TABS.lock().unwrap().insert(tab_id.clone(), tab);
 
@@ -77,7 +78,7 @@ pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpRes
       tab_id,
       url: url.to_string(),
     })
-  };
+  }
 
   parse_url(&req.url)
     .and_then(|url| open_new_tab(url, browser))
