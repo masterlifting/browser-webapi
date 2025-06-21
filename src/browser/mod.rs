@@ -1,49 +1,36 @@
 pub mod page;
 
 use headless_chrome::{Browser, LaunchOptions};
-use std::sync::Arc;
+use std::ffi::OsStr;
+use std::{sync::Arc, time};
 
 use crate::models::{Error, ErrorInfo};
 
 pub fn launch() -> Result<Arc<Browser>, Error> {
-  use std::ffi::OsStr;
-  use std::time::Duration;
+  let one_week = time::Duration::from_secs(60 * 60 * 24 * 7);
 
-  let mut options = LaunchOptions::default();
+  let mut options = LaunchOptions {
+    headless: false,
+    idle_browser_timeout: one_week,
+    ignore_certificate_errors: false,
+    window_size: Some((1280, 800)),
+    sandbox: true,
+    ..Default::default()
+  };
 
-  options.headless = true;
-  options.idle_browser_timeout = Duration::from_secs(0); // Disable idle timeout completely
-  options.window_size = Some((1920, 1080));
-  options.ignore_certificate_errors = true;
-  options.sandbox = false; // May be required in some environments
-
-  // Chrome flags for long-running stability as OsStr
   let args = vec![
-    "--disable-backgrounding-occluded-windows",
-    "--disable-renderer-backgrounding",
-    "--disable-features=TranslateUI",
-    "--disable-component-extensions-with-background-pages",
-    "--disable-background-timer-throttling",
-    "--disable-hang-monitor",
-    "--no-default-browser-check",
-    "--disable-popup-blocking",
-    "--disable-features=IsolateOrigins,site-per-process",
-    "--disable-gpu",
     "--no-sandbox",
+    "--lang=en-US,en",
+    "--window-size=1366,768",
+    "--disable-blink-features=AutomationControlled",
+    "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36",
   ];
 
-  // Convert each argument to OsStr and add to options.args
   options.args = args.iter().map(OsStr::new).collect();
-  // Log options for debugging
-  tracing::info!(
-    "Launching browser with idle_timeout: {:?}",
-    options.idle_browser_timeout
-  );
-  tracing::info!("Chrome args: {:?}", args);
 
   Browser::new(options).map(Arc::new).map_err(|e| {
     Error::Operation(ErrorInfo {
-      message: format!("Failed to launch browser: {}", e),
+      message: e.to_string(),
       code: None,
     })
   })
