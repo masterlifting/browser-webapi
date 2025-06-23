@@ -9,7 +9,6 @@ pub struct LoadRequest {
 #[derive(Serialize)]
 pub struct LoadResponse {
   pub tab_id: String,
-  pub url: String,
 }
 
 #[derive(Deserialize)]

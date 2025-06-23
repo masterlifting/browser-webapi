@@ -28,10 +28,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   crate::browser::page::load(req, browser.get_ref().clone()).await
                 }),
               )
-              .route(
-                "/close",
-                web::post().to(|| async { HttpResponse::Ok().finish() }),
-              )
+              .route("/close", web::post().to(crate::browser::page::close))
               .route(
                 "/text/find",
                 web::post().to(|| async { HttpResponse::Ok().finish() }),
