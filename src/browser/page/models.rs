@@ -15,3 +15,15 @@ pub struct LoadResponse {
 pub struct CloseRequest {
   pub tab_id: String,
 }
+
+#[derive(Deserialize)]
+pub struct PostElement {
+  pub selector: String,
+  pub value: String,
+}
+
+#[derive(Deserialize)]
+pub struct FillElementsRequest {
+  pub tab_id: String,
+  pub elements: Vec<PostElement>,
+}

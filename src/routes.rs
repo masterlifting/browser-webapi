@@ -34,8 +34,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 web::post().to(|| async { HttpResponse::Ok().finish() }),
               )
               .route(
-                "/input/fill",
-                web::post().to(|| async { HttpResponse::Ok().finish() }),
+                "/inputs/fill",
+                web::post().to(crate::browser::page::fill_inputs),
               )
               .route(
                 "/mouse/click",
