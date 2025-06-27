@@ -1,3 +1,4 @@
+#![warn(clippy::all)]
 pub mod models;
 
 use actix_web::{HttpResponse, web};
@@ -82,7 +83,6 @@ pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpRes
   fn create_response(tab: Arc<Tab>) -> HttpResponse {
     let tab_id = Uuid::new_v4().to_string();
     TABS.lock().unwrap().insert(tab_id.clone(), tab);
-
     HttpResponse::Ok().json(LoadResponse { tab_id })
   }
 
@@ -112,7 +112,7 @@ pub async fn close(req: web::Json<CloseRequest>) -> HttpResponse {
   fn remove_tab(tab_id: &str, tab: Arc<Tab>) -> HttpResponse {
     TABS.lock().unwrap().remove(tab_id);
     drop(tab);
-    return HttpResponse::Ok().finish();
+    HttpResponse::Ok().finish()
   }
 
   find_tab(&req.tab_id)
@@ -126,7 +126,7 @@ pub async fn close(req: web::Json<CloseRequest>) -> HttpResponse {
     })
 }
 
-pub fn fill_inputs(req: web::Json<FillElementsRequest>) -> HttpResponse {
+pub async fn fill_inputs(req: web::Json<FillElementsRequest>) -> HttpResponse {
   fn fill_element(element: &Element, value: &str) -> Result<(), String> {
     element
       .type_into(value)
