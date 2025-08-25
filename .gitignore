@@ -52,3 +52,5 @@ debug/
 
 # Profiling files
 profile/
+
+.env

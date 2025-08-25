@@ -1,13 +1,9 @@
-pub mod browser;
-pub mod models;
-pub mod routes;
-
 use actix_web::web;
 use std::env;
 use tracing_actix_web::TracingLogger;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-pub async fn run_server() -> std::io::Result<()> {
+pub async fn run() -> std::io::Result<()> {
   dotenv::dotenv().ok();
 
   let host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
@@ -22,7 +18,7 @@ pub async fn run_server() -> std::io::Result<()> {
   tracing::info!("Starting server at http://{}:{}", host, port);
 
   // Launch a single browser instance for the entire application
-  let browser = match browser::launch() {
+  let browser = match crate::browser::api::launch() {
     Ok(browser) => {
       tracing::info!("Browser launched successfully");
       browser
@@ -37,9 +33,6 @@ pub async fn run_server() -> std::io::Result<()> {
   };
 
   actix_web::HttpServer::new(move || {
-    // Each worker gets its own clone of the Arc<Browser>
-    let browser = browser.clone();
-
     let cors = actix_cors::Cors::default()
       .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
       .allowed_headers(vec![
@@ -54,7 +47,7 @@ pub async fn run_server() -> std::io::Result<()> {
       .wrap(TracingLogger::default())
       .wrap(cors)
       .app_data(web::Data::new(browser.clone())) // Store browser in app state
-      .configure(routes::configure)
+      .configure(crate::web_api::routes::configure)
   })
   .bind(format!("{}:{}", host, port))?
   .run()

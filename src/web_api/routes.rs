@@ -3,7 +3,7 @@ use std::sync::Arc;
 use actix_web::{HttpResponse, web};
 use headless_chrome::Browser;
 
-use crate::models::Error;
+use crate::web_api::models::Error;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
   cfg
@@ -25,17 +25,17 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
               .route(
                 "/load",
                 web::post().to(|req, browser: web::Data<Arc<Browser>>| async move {
-                  crate::browser::page::load(req, browser.get_ref().clone()).await
+                  crate::browser::page::api::load(req, browser.get_ref().clone()).await
                 }),
               )
-              .route("/close", web::post().to(crate::browser::page::close))
+              .route("/close", web::post().to(crate::browser::page::api::close))
               .route(
                 "/text/find",
                 web::post().to(|| async { HttpResponse::Ok().finish() }),
               )
               .route(
                 "/inputs/fill",
-                web::post().to(crate::browser::page::fill_inputs),
+                web::post().to(crate::browser::page::api::fill_inputs),
               )
               .route(
                 "/mouse/click",

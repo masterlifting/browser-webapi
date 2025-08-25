@@ -1,6 +1,3 @@
-#![warn(clippy::all)]
-pub mod models;
-
 use actix_web::{HttpResponse, web};
 use headless_chrome::Element;
 use headless_chrome::{Browser, Tab};
@@ -12,7 +9,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::browser::page::models::{CloseRequest, FillElementsRequest, LoadRequest, LoadResponse};
-use crate::models::{Error, ErrorInfo};
+use crate::web_api::models::{Error, ErrorInfo};
 
 lazy_static! {
   static ref TABS: Mutex<HashMap<String, Arc<Tab>>> = Mutex::new(HashMap::new());

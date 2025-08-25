@@ -1,10 +1,8 @@
-pub mod page;
-
 use headless_chrome::{Browser, LaunchOptions};
 use std::ffi::OsStr;
 use std::{sync::Arc, time};
 
-use crate::models::{Error, ErrorInfo};
+use crate::web_api::models::{Error, ErrorInfo};
 
 pub fn launch() -> Result<Arc<Browser>, Error> {
   let one_week = time::Duration::from_secs(60 * 60 * 24 * 7);
