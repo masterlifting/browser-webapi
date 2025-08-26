@@ -1,4 +1,3 @@
-use actix_web::{HttpResponse, web};
 use headless_chrome::Element;
 use headless_chrome::{Browser, Tab};
 use lazy_static::lazy_static;
@@ -8,7 +7,7 @@ use std::sync::Mutex;
 use url::Url;
 use uuid::Uuid;
 
-use crate::browser::page::models::{CloseRequest, FillElementsRequest, LoadRequest, LoadResponse};
+use crate::browser::tab::dto::{FillRequest, GetElement, OpenRequest};
 use crate::web_api::models::{Error, ErrorInfo};
 
 lazy_static! {
@@ -33,7 +32,7 @@ fn find_element<'a>(tab: &'a Arc<Tab>, selector: &'a str) -> Result<Element<'a>,
   })
 }
 
-pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpResponse {
+pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Error> {
   fn parse_url(url: &str) -> Result<Url, Error> {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
@@ -77,26 +76,20 @@ pub async fn load(req: web::Json<LoadRequest>, browser: Arc<Browser>) -> HttpRes
       })
   }
 
-  fn create_response(tab: Arc<Tab>) -> HttpResponse {
+  fn create_response(tab: Arc<Tab>) -> Result<String, Error> {
     let tab_id = Uuid::new_v4().to_string();
     TABS.lock().unwrap().insert(tab_id.clone(), tab);
-    HttpResponse::Ok().json(LoadResponse { tab_id })
+    Ok(tab_id)
   }
 
   parse_url(&req.url)
     .and_then(|url| open_new_tab(url, browser))
     .and_then(|(url, tab)| navigate_to_url(tab, url))
     .and_then(wait_for_navigation)
-    .map(create_response)
-    .unwrap_or_else(|e| {
-      HttpResponse::BadRequest().json(Error::Operation(ErrorInfo {
-        message: e.to_string(),
-        code: None,
-      }))
-    })
+    .and_then(create_response)
 }
 
-pub async fn close(req: web::Json<CloseRequest>) -> HttpResponse {
+pub async fn close(tab_id: &str) -> Result<(), Error> {
   fn close_tab(tab: Arc<Tab>) -> Result<Arc<Tab>, Error> {
     tab.close(true).map(|_| tab).map_err(|e| {
       Error::Operation(ErrorInfo {
@@ -106,24 +99,18 @@ pub async fn close(req: web::Json<CloseRequest>) -> HttpResponse {
     })
   }
 
-  fn remove_tab(tab_id: &str, tab: Arc<Tab>) -> HttpResponse {
+  fn remove_tab(tab_id: &str, tab: Arc<Tab>) -> Result<(), Error> {
     TABS.lock().unwrap().remove(tab_id);
     drop(tab);
-    HttpResponse::Ok().finish()
+    Ok(())
   }
 
-  find_tab(&req.tab_id)
+  find_tab(tab_id)
     .and_then(close_tab)
-    .map(|tab| remove_tab(&req.tab_id, tab))
-    .unwrap_or_else(|e| {
-      HttpResponse::BadRequest().json(Error::Operation(ErrorInfo {
-        message: e.to_string(),
-        code: None,
-      }))
-    })
+    .and_then(|tab| remove_tab(tab_id, tab))
 }
 
-pub async fn fill_inputs(req: web::Json<FillElementsRequest>) -> HttpResponse {
+pub async fn fill(tab_id: &str, req: FillRequest) -> Result<(), Error> {
   fn fill_element(element: &Element, value: &str) -> Result<(), String> {
     element
       .type_into(value)
@@ -131,24 +118,29 @@ pub async fn fill_inputs(req: web::Json<FillElementsRequest>) -> HttpResponse {
       .map_err(|e| format!("Failed to fill input element '{}': {}", &element.value, e))
   }
 
-  find_tab(&req.tab_id)
-    .and_then(|tab| {
-      req.elements.iter().try_for_each(|element| {
-        find_element(&tab, &element.selector).and_then(|element| {
-          fill_element(&element, &element.value).map_err(|e| {
-            Error::Operation(ErrorInfo {
-              message: e,
-              code: None,
-            })
+  find_tab(tab_id).and_then(|tab| {
+    req.inputs.iter().try_for_each(|post_element| {
+      find_element(&tab, &post_element.selector).and_then(|element| {
+        fill_element(&element, &post_element.value).map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: e,
+            code: None,
           })
         })
       })
     })
-    .map(|_| HttpResponse::Ok().finish())
-    .unwrap_or_else(|e| {
-      HttpResponse::BadRequest().json(Error::Operation(ErrorInfo {
-        message: e.to_string(),
-        code: None,
-      }))
+  })
+}
+
+pub async fn click(tab_id: &str, req: GetElement) -> Result<(), Error> {
+  find_tab(tab_id).and_then(|tab| {
+    find_element(&tab, &req.selector).and_then(|element| {
+      element.click().map(|_| ()).map_err(|e| {
+        Error::Operation(ErrorInfo {
+          message: format!("Failed to click element '{}': {}", req.selector, e),
+          code: None,
+        })
+      })
     })
+  })
 }

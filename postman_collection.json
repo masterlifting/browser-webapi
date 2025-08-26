@@ -1,0 +1,196 @@
+{
+	"info": {
+		"_postman_id": "2bb8a6c3-fea8-41d2-afb3-168b9fb42ada",
+		"name": "browser-automation-webapi",
+		"description": "Postman collection matching current non-mocked routes in routes.rs",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "11034163"
+	},
+	"item": [
+		{
+			"name": "Health",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/api/v1/health",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"health"
+					]
+				},
+				"description": "Service health and version"
+			},
+			"response": []
+		},
+		{
+			"name": "Tab - Open",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"url\": \"https://www.google.com\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/browser/tab/open",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"browser",
+						"tab",
+						"open"
+					]
+				},
+				"description": "Open a new tab; returns tab id as raw body"
+			},
+			"response": []
+		},
+		{
+			"name": "Tab - Close",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/browser/tabs/{{tab_id}}/close",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"browser",
+						"tabs",
+						"{{tab_id}}",
+						"close"
+					]
+				},
+				"description": "Close a tab by id (GET). Provide id as path variable."
+			},
+			"response": []
+		},
+		{
+			"name": "Tab - Fill",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"inputs\": [\n    { \"selector\": \"textarea[name=\\\"q\\\"]\", \"value\": \"user\" }\n  ]\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/browser/tabs/{{tab_id}}/fill",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"browser",
+						"tabs",
+						"{{tab_id}}",
+						"fill"
+					]
+				},
+				"description": "Fill multiple input elements on the tab. Provide tab id as path variable 'id'."
+			},
+			"response": []
+		},
+		{
+			"name": "Tab - Click",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"selector\": \"input[name=\\\"btnK\\\"]\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/browser/tabs/{{tab_id}}/click",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"browser",
+						"tabs",
+						"{{tab_id}}",
+						"click"
+					]
+				},
+				"description": "Click an element on the tab by selector. Returns a short string on success."
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080"
+		},
+		{
+			"key": "tab_id",
+			"value": "<tab-id>"
+		}
+	]
+}

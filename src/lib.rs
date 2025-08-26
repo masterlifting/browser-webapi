@@ -1,8 +1,8 @@
 pub mod browser {
   pub mod api;
-  pub mod page {
+  pub mod tab {
     pub mod api;
-    pub mod models;
+    pub mod dto;
   }
 }
 
