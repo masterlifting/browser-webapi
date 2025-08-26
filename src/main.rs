@@ -1,20 +1,8 @@
 #![warn(clippy::all, clippy::pedantic)]
+use browser_api::browser;
+use browser_api::web_api;
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
-
-mod browser {
-  pub mod api;
-  pub mod page {
-    pub mod api;
-    pub mod models;
-  }
-}
-
-mod web_api {
-  pub mod models;
-  pub mod routes;
-  pub mod server;
-}
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
