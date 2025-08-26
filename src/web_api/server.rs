@@ -1,36 +1,12 @@
 use actix_web::web;
-use std::env;
+use headless_chrome::Browser;
+use std::{env, sync::Arc};
 use tracing_actix_web::TracingLogger;
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-pub async fn run() -> std::io::Result<()> {
-  dotenv::dotenv().ok();
-
+pub async fn run(browser: Arc<Browser>) -> std::io::Result<()> {
   let host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
   let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8080".to_string());
-  let log_level = env::var("LOG_LEVEL").unwrap_or_else(|_| "info".to_string());
-
-  tracing_subscriber::registry()
-    .with(tracing_subscriber::EnvFilter::new(log_level))
-    .with(tracing_subscriber::fmt::layer())
-    .init();
-
   tracing::info!("Starting server at http://{}:{}", host, port);
-
-  // Launch a single browser instance for the entire application
-  let browser = match crate::browser::api::launch() {
-    Ok(browser) => {
-      tracing::info!("Browser launched successfully");
-      browser
-    }
-    Err(e) => {
-      tracing::error!("Failed to launch browser: {}", e);
-      return Err(std::io::Error::new(
-        std::io::ErrorKind::Other,
-        e.to_string(),
-      ));
-    }
-  };
 
   actix_web::HttpServer::new(move || {
     let cors = actix_cors::Cors::default()

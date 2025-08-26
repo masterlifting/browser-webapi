@@ -1,8 +1,7 @@
 use headless_chrome::{Browser, LaunchOptions};
 use std::ffi::OsStr;
+use std::io::{Error, ErrorKind};
 use std::{sync::Arc, time};
-
-use crate::web_api::models::{Error, ErrorInfo};
 
 pub fn launch() -> Result<Arc<Browser>, Error> {
   let one_week = time::Duration::from_secs(60 * 60 * 24 * 7);
@@ -26,10 +25,11 @@ pub fn launch() -> Result<Arc<Browser>, Error> {
 
   options.args = args.iter().map(OsStr::new).collect();
 
-  Browser::new(options).map(Arc::new).map_err(|e| {
-    Error::Operation(ErrorInfo {
-      message: e.to_string(),
-      code: None,
+  Browser::new(options)
+    .map(Arc::new)
+    .map(|browser| {
+      tracing::info!("Browser launched successfully");
+      browser
     })
-  })
+    .map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
 }
