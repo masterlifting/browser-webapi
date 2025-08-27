@@ -1,6 +1,4 @@
-use serde::{Deserialize, Serialize};
-
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Debug)]
 pub struct ErrorInfo {
   pub message: String,
   pub code: Option<String>,
@@ -15,18 +13,12 @@ impl std::fmt::Display for ErrorInfo {
   }
 }
 
-#[derive(Serialize, Deserialize, Debug)]
-#[serde(tag = "type")]
+#[derive(Debug)]
 pub enum Error {
-  #[serde(rename = "not_found")]
   NotFound(String),
-  #[serde(rename = "not_implemented")]
   NotImplemented(String),
-  #[serde(rename = "not_supported")]
   NotSupported(String),
-  #[serde(rename = "canceled")]
   Canceled(String),
-  #[serde(rename = "operation_error")]
   Operation(ErrorInfo),
 }
 
@@ -40,14 +32,4 @@ impl std::fmt::Display for Error {
       Error::Operation(info) => write!(f, "Operation Error: {}", info),
     }
   }
-}
-
-#[derive(Serialize)]
-pub struct Response<T>
-where
-  T: Serialize,
-{
-  pub success: bool,
-  pub message: String,
-  pub payload: Option<T>,
 }

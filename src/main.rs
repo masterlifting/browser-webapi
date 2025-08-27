@@ -1,6 +1,9 @@
 #![warn(clippy::all, clippy::pedantic)]
-use browser_api::browser;
-use browser_api::web_api;
+
+pub mod browser;
+pub mod models;
+pub mod web_api;
+
 use std::env;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 

@@ -1,4 +1,4 @@
-# Browser Automation WebAPI
+# Browser WebAPI
 A robust web API service for browser automation using headless Chrome. This project provides a REST API to control Chrome programmatically for tasks like screenshots, PDF generation, content extraction, and form automation.
 
 ## Features
@@ -33,7 +33,7 @@ This project adopts a functional style inspired by F#, emphasizing:
 4. Pattern matching for clear, safe branching  
 5. Error handling using Result types
 
-# Browser Automation WebAPI — API reference
+# Browser WebAPI — API reference
 
 This README provides a short, accurate API summary. For full request/response examples and ready-to-run requests, import the included `postman_collection.json` into Postman.
 
@@ -47,7 +47,9 @@ Implemented routes (summary)
 | Method | Endpoint | Description |
 |---|---|---|
 | **GET** | `/api/v1/health` | Health / status |
-| **POST** | `/api/v1/browser/tab/open` | Open a new browser tab |
-| **GET** | `/api/v1/browser/tabs/{id}/close` | Close a tab |
-| **POST** | `/api/v1/browser/tabs/{id}/fill` | Fill inputs |
-| **POST** | `/api/v1/browser/tabs/{id}/click` | Click an element |
+| **POST** | `/api/v1/tab/open` | Open a new browser tab |
+| **GET** | `/api/v1/tabs/{id}/close` | Close a tab |
+| **POST** | `/api/v1/tabs/{id}/fill` | Fill form inputs |
+| **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
+| **GET** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
+| **GET** | `/api/v1/tabs/{id}/element/content` | Get element text content |

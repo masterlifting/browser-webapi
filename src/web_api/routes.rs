@@ -2,15 +2,18 @@ use std::sync::Arc;
 
 use actix_web::{HttpResponse, web};
 use headless_chrome::Browser;
+use serde_json::json;
 
+use crate::browser::element;
+use crate::browser::element::dto::GetElement;
 use crate::browser::tab;
-use crate::browser::tab::dto::{FillRequest, GetElement, OpenRequest};
-use crate::web_api::models::Error;
+use crate::browser::tab::dto::{FillRequest, OpenRequest};
+use crate::models::Error;
 
 fn map_error_to_response(e: Error) -> HttpResponse {
   match e {
-    Error::NotFound(_) => HttpResponse::NotFound().json(e),
-    _ => HttpResponse::BadRequest().json(e),
+    Error::NotFound(msg) => HttpResponse::NotFound().body(msg),
+    error => HttpResponse::BadRequest().body(error.to_string()),
   }
 }
 
@@ -33,55 +36,71 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .route(
           "/health",
           web::get().to(|| async {
-            HttpResponse::Ok().json(serde_json::json!({
+            HttpResponse::Ok().json(json!({
                 "status": "ok",
                 "version": std::env::var("VERSION")
                     .unwrap_or_else(|_| "unknown".to_string()),
             }))
           }),
         )
+        .service(web::scope("/tab").route(
+          "/open",
+          web::post().to(
+            |req: web::Json<OpenRequest>, browser: web::Data<Arc<Browser>>| async move {
+              map_string_to_response(
+                tab::api::open(browser.get_ref().clone(), req.into_inner()).await,
+              )
+            },
+          ),
+        ))
         .service(
-          web::scope("/browser")
-            .service(web::scope("/tab").route(
-              "/open",
+          web::scope("/tabs/{id}")
+            .route(
+              "/close",
+              web::get().to(|id: web::Path<String>| async move {
+                map_unit_to_response(tab::api::close(&id).await)
+              }),
+            )
+            .route(
+              "/fill",
               web::post().to(
-                |req: web::Json<OpenRequest>, browser: web::Data<Arc<Browser>>| async move {
-                  map_string_to_response(
-                    tab::api::open(browser.get_ref().clone(), req.into_inner()).await,
-                  )
+                |req: web::Json<FillRequest>, id: web::Path<String>| async move {
+                  map_unit_to_response(tab::api::fill(&id, req.into_inner()).await)
                 },
               ),
-            ))
+            )
             .service(
-              web::scope("/tabs/{id}")
-                .route(
-                  "/close",
-                  web::get().to(|id: web::Path<String>| async move {
-                    map_unit_to_response(tab::api::close(&id).await)
-                  }),
-                )
-                .route(
-                  "/fill",
-                  web::post().to(
-                    |req: web::Json<FillRequest>, id: web::Path<String>| async move {
-                      map_unit_to_response(tab::api::fill(&id, req.into_inner()).await)
-                    },
-                  ),
-                )
+              web::scope("/element")
                 .route(
                   "/click",
                   web::post().to(
                     |req: web::Json<GetElement>, id: web::Path<String>| async move {
-                      map_unit_to_response(tab::api::click(&id, req.into_inner()).await)
+                      map_unit_to_response(element::api::click(&id, req.into_inner()).await)
+                    },
+                  ),
+                )
+                .route(
+                  "/exists",
+                  web::get().to(
+                    |req: web::Json<GetElement>, id: web::Path<String>| async move {
+                      HttpResponse::Ok().body(
+                        element::api::exists(&id, req.into_inner())
+                          .await
+                          .to_string(),
+                      )
+                    },
+                  ),
+                )
+                .route(
+                  "/content",
+                  web::get().to(
+                    |req: web::Json<GetElement>, id: web::Path<String>| async move {
+                      map_string_to_response(element::api::content(&id, req.into_inner()).await)
                     },
                   ),
                 ),
             ),
         ),
     )
-    .default_service(web::to(|| async {
-      actix_web::HttpResponse::NotFound().json(serde_json::json!(Error::NotFound(
-        "Endpoint not found".to_string()
-      )))
-    }));
+    .default_service(web::to(|| async { HttpResponse::NotFound() }));
 }
