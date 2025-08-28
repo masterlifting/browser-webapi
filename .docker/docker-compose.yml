@@ -1,5 +1,6 @@
 services:
   browser-api:
+    container_name: browser-api
     build:
       context: ..
       dockerfile: .docker/Dockerfile

@@ -7,7 +7,7 @@ pub fn launch() -> Result<Arc<Browser>, Error> {
   let one_week = time::Duration::from_secs(60 * 60 * 24 * 7);
 
   let mut options = LaunchOptions {
-    headless: false,
+    headless: true,
     idle_browser_timeout: one_week,
     ignore_certificate_errors: false,
     window_size: Some((1280, 800)),

@@ -22,7 +22,7 @@ pub async fn run(browser: Arc<Browser>) -> std::io::Result<()> {
     actix_web::App::new()
       .wrap(TracingLogger::default())
       .wrap(cors)
-      .app_data(web::Data::new(browser.clone())) // Store browser in app state
+      .app_data(web::Data::new(browser.clone()))
       .configure(crate::web_api::routes::configure)
   })
   .bind(format!("{}:{}", host, port))?
