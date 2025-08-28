@@ -49,7 +49,7 @@ pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Err
   fn navigate_to_url(tab: Arc<Tab>, url: Url) -> Result<Arc<Tab>, Error> {
     tab
       .navigate_to(&url.as_str())
-      .map(|_| (tab.clone()))
+      .map(|_| tab.clone())
       .map_err(|e| {
         Error::Operation(ErrorInfo {
           message: format!("Failed to navigate to URL: {}", e),
@@ -59,10 +59,9 @@ pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Err
   }
 
   fn wait_for_navigation(tab: Arc<Tab>) -> Result<Arc<Tab>, Error> {
-    let tab_clone = tab.clone();
     tab
       .wait_until_navigated()
-      .map(|_| (tab_clone))
+      .map(|_| tab.clone())
       .map_err(|e| {
         Error::Operation(ErrorInfo {
           message: format!("Failed to wait for navigation: {}", e),
