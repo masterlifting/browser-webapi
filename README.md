@@ -53,3 +53,4 @@ Implemented routes (summary)
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
 | **GET** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
 | **GET** | `/api/v1/tabs/{id}/element/content` | Get element text content |
+| **POST** | `/api/v1/tabs/{id}/element/evaluate` | Evaluate JavaScript on an element |

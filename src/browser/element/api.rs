@@ -1,7 +1,7 @@
 use headless_chrome::Element;
 use std::sync::Arc;
 
-use crate::browser::element::dto::GetElement;
+use crate::browser::element::dto::{GetElement, PostElement};
 use crate::browser::tab;
 use crate::models::{Error, ErrorInfo};
 
@@ -56,6 +56,22 @@ pub async fn content(tab_id: &str, req: GetElement) -> Result<String, Error> {
           code: None,
         })
       })
+    })
+  })
+}
+
+pub async fn evaluate(tab_id: &str, req: PostElement) -> Result<(), Error> {
+  tab::api::find(tab_id).and_then(|tab| {
+    find(&tab, &req.selector).and_then(|element| {
+      element
+        .call_js_fn(&format!("function() {{ {} }}", req.value), vec![], true)
+        .map(|_| ())
+        .map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: format!("Failed to evaluate JS on element '{}': {}", req.selector, e),
+            code: None,
+          })
+        })
     })
   })
 }

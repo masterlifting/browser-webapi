@@ -1,79 +1,98 @@
-FROM rust:1.85-slim as builder
+# Builder stage - optimized for caching
+FROM rust:latest as builder
 
-# Add this for faster dependency compilation
+# Set environment variables for faster builds
 ENV CARGO_REGISTRIES_CRATES_IO_PROTOCOL=sparse
-
-# Build with fewer codegen units for faster compilation
 ENV CARGO_PROFILE_RELEASE_CODEGEN_UNITS=1
 
-# Install system dependencies
+# Install build dependencies only (no Chrome needed - headless_chrome crate handles it)
 RUN apt-get update && apt-get install -y \
     pkg-config \
     libssl-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && \
+    # Clean up
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
 WORKDIR /app
 
-# Copy dependency files first for better caching
+# Copy dependency files for dependency caching (changes when deps change)
 COPY Cargo.toml Cargo.lock ./
 
-# Create a dummy main.rs to build dependencies
-RUN mkdir src && echo "fn main() {}" > src/main.rs
+# Build dependencies only (cached until dependencies change)
+RUN mkdir src && echo "fn main() {}" > src/main.rs && cargo build --release && rm -rf src
 
-# Build dependencies only (this layer will be cached)
-RUN cargo build --release
-
-# Remove the dummy files
-RUN rm -rf src/main.rs
-
-# Copy the actual source code
+# Copy source code (changes most frequently)
 COPY src ./src
 
-# Touch main.rs to ensure it's newer than Cargo.toml
-RUN touch src/main.rs
-
-# Build the actual application
+# Build the final application
 RUN cargo build --release
 
-# Runtime stage - use latest Debian
-FROM debian:bookworm-slim
+# Runtime stage - optimized for caching
+FROM debian:stable-slim
 
-# Minimal runtime dependencies (Debian)
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    chromium \
+# Install runtime dependencies for headless_chrome
+RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
-    libnss3 \
+    libasound2 \
     libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libatspi2.0-0 \
+    libc6 \
+    libcairo2 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libexpat1 \
+    libfontconfig1 \
+    libgbm1 \
+    libgcc-s1 \
+    libglib2.0-0 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libpango-1.0-0 \
+    libstdc++6 \
     libx11-6 \
+    libx11-xcb1 \
+    libxcb1 \
     libxcomposite1 \
+    libxcursor1 \
     libxdamage1 \
+    libxext6 \
+    libxfixes3 \
+    libxi6 \
     libxrandr2 \
-    curl \
- && rm -rf /var/lib/apt/lists/*
+    libxrender1 \
+    libxss1 \
+    libxtst6 \
+    lsb-release \
+    wget \
+    xdg-utils \
+    && \
+    # Install Chrome for headless_chrome compatibility
+    wget -q https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb && \
+    dpkg -i google-chrome-stable_current_amd64.deb || apt-get -fy install && \
+    rm -f google-chrome-stable_current_amd64.deb && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-
-# Create app directory
-RUN mkdir -p /app
-WORKDIR /app
-
-# Copy the binary from builder stage
+# Copy and setup application binary (changes when code changes)
 COPY --from=builder /app/target/release/browser_api /app/browser_api
-COPY .docker/.env /app/.env
+RUN chmod +x /app/browser_api
 
-# Create user and set permissions
-RUN useradd -r -s /bin/false -u 1001 browseruser && \
-    chown -R browseruser:browseruser /app && \
-    chmod +x /app/browser_api
-
-# Switch to non-root user
-USER browseruser
-
-# Environment variables
-ENV CHROME_BIN=/usr/bin/chromium
-ENV CHROME_PATH=/usr/bin/chromium
+# Set environment variables
 ENV RUST_LOG=info
 ENV RUST_BACKTRACE=1
 
+# Expose port
 EXPOSE 8080
-CMD ["./browser_api"]
+
+# Set working directory
+WORKDIR /app
+
+# Copy environment file (most likely to change - put last)
+COPY .env /app/.env
+
+# Run the application
+CMD ["/app/browser_api"]

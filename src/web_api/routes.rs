@@ -5,7 +5,7 @@ use headless_chrome::Browser;
 use serde_json::json;
 
 use crate::browser::element;
-use crate::browser::element::dto::GetElement;
+use crate::browser::element::dto::{GetElement, PostElement};
 use crate::browser::tab;
 use crate::browser::tab::dto::{FillRequest, OpenRequest};
 use crate::models::Error;
@@ -96,6 +96,14 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   web::get().to(
                     |req: web::Json<GetElement>, id: web::Path<String>| async move {
                       map_string_to_response(element::api::content(&id, req.into_inner()).await)
+                    },
+                  ),
+                )
+                .route(
+                  "/evaluate",
+                  web::post().to(
+                    |req: web::Json<PostElement>, id: web::Path<String>| async move {
+                      map_unit_to_response(element::api::evaluate(&id, req.into_inner()).await)
                     },
                   ),
                 ),

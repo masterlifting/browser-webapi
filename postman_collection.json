@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "90a58760-a86a-4579-90db-2f354f55a5c5",
+		"_postman_id": "7e1609df-0f82-4d31-b43a-e71759721dde",
 		"name": "browser-webapi",
 		"description": "Postman collection matching current non-mocked routes in routes.rs",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -103,6 +103,43 @@
 									]
 								},
 								"description": "Get the inner text content of an element on the tab by selector. Returns the text content as raw body."
+							},
+							"response": []
+						},
+						{
+							"name": "evaluate",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"selector\": \"form#login-form\",\n  \"value\": \"this.submit();\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/evaluate",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"tabs",
+										"{{tab_id}}",
+										"element",
+										"evaluate"
+									]
+								},
+								"description": "Evaluate JavaScript on an element by selector. The JavaScript is executed in the context of the element."
 							},
 							"response": []
 						}

@@ -46,6 +46,25 @@ pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Err
     })
   }
 
+  fn call_js(tab: Arc<Tab>, url: Url) -> Result<(Url, Arc<Tab>), Error> {
+    tab
+      .evaluate(
+        r#"
+            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+            window.navigator.chrome = { runtime: {} };
+            Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });"#,
+        true,
+      )
+      .map(|_| (url, tab.clone()))
+      .map_err(|e| {
+        Error::Operation(ErrorInfo {
+          message: format!("Failed to call JS: {}", e),
+          code: None,
+        })
+      })
+  }
+
   fn navigate_to_url(tab: Arc<Tab>, url: Url) -> Result<Arc<Tab>, Error> {
     tab
       .navigate_to(&url.as_str())
@@ -78,6 +97,7 @@ pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Err
 
   parse_url(&req.url)
     .and_then(|url| open_new_tab(url, browser))
+    .and_then(|(url, tab)| call_js(tab, url))
     .and_then(|(url, tab)| navigate_to_url(tab, url))
     .and_then(wait_for_navigation)
     .and_then(add_tab)

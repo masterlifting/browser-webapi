@@ -19,7 +19,7 @@ serde_json = "1.0"
 actix-web = "4.11"
 actix-rt = "2.10"
 actix-cors = "0.7"
-headless_chrome = "1.0"
+headless_chrome = { git = "https://github.com/rust-headless-chrome/rust-headless-chrome", features = ["fetch"] }
 chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
 url = "2.5"
@@ -28,7 +28,6 @@ lazy_static = "1.5"
 
 [dev-dependencies]
 mockito = "1.5"
-rstest = "0.25"
 reqwest = { version = "0.12", features = ["json"] }
 
 # Development profile - fast compilation
