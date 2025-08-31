@@ -10,5 +10,7 @@ services:
       - .env
     environment:
       - LOG_LEVEL=info
+      - USE_UI=false
       - USER_DATA_DIR=/tmp
+      - IDLE_TIMEOUT_DAYS=365
     shm_size: 2gb

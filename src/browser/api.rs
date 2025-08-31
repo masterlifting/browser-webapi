@@ -2,17 +2,16 @@ use headless_chrome::{Browser, LaunchOptionsBuilder};
 use std::ffi::OsStr;
 use std::io::{Error, ErrorKind};
 use std::sync::Arc;
-use std::time;
 
-pub fn launch(user_data_dir: &str) -> Result<Arc<Browser>, Error> {
-  let one_week = time::Duration::from_secs(60 * 60 * 24 * 7);
+use crate::browser::models::LaunchOptions;
 
+pub fn launch(options: LaunchOptions) -> Result<Arc<Browser>, Error> {
   LaunchOptionsBuilder::default()
-    .headless(false)
+    .headless(options.headless)
     .disable_default_args(true)
     .ignore_certificate_errors(false)
     .window_size(Some((1920, 1080)))
-    .idle_browser_timeout(one_week)
+    .idle_browser_timeout(options.idle_timeout)
     .args(vec![
       OsStr::new("--no-sandbox"),
       OsStr::new("--disable-setuid-sandbox"),
@@ -28,7 +27,7 @@ pub fn launch(user_data_dir: &str) -> Result<Arc<Browser>, Error> {
       OsStr::new("--disable-web-security"),
       OsStr::new("--disable-extensions"),
       OsStr::new("--no-default-browser-check"),
-      OsStr::new(&format!("--user-data-dir={}", user_data_dir)),
+      OsStr::new(&format!("--user-data-dir={}", options.user_data_dir)),
       OsStr::new("--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36"),
     ])
     .build()
