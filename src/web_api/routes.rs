@@ -5,9 +5,9 @@ use headless_chrome::Browser;
 use serde_json::json;
 
 use crate::browser::element;
-use crate::browser::element::dto::{GetElement, PostElement};
+use crate::browser::element::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto};
 use crate::browser::tab;
-use crate::browser::tab::dto::{FillRequest, OpenRequest};
+use crate::browser::tab::dto::{FillDto, OpenDto};
 use crate::models::Error;
 
 fn map_error_to_response(e: Error) -> HttpResponse {
@@ -46,7 +46,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(web::scope("/tab").route(
           "/open",
           web::post().to(
-            |req: web::Json<OpenRequest>, browser: web::Data<Arc<Browser>>| async move {
+            |req: web::Json<OpenDto>, browser: web::Data<Arc<Browser>>| async move {
               map_string_to_response(
                 tab::api::open(browser.get_ref().clone(), req.into_inner()).await,
               )
@@ -64,7 +64,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route(
               "/fill",
               web::post().to(
-                |req: web::Json<FillRequest>, id: web::Path<String>| async move {
+                |req: web::Json<FillDto>, id: web::Path<String>| async move {
                   map_unit_to_response(tab::api::fill(&id, req.into_inner()).await)
                 },
               ),
@@ -74,15 +74,15 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 .route(
                   "/click",
                   web::post().to(
-                    |req: web::Json<GetElement>, id: web::Path<String>| async move {
+                    |req: web::Json<ClickDto>, id: web::Path<String>| async move {
                       map_unit_to_response(element::api::click(&id, req.into_inner()).await)
                     },
                   ),
                 )
                 .route(
                   "/exists",
-                  web::get().to(
-                    |req: web::Json<GetElement>, id: web::Path<String>| async move {
+                  web::post().to(
+                    |req: web::Json<ExistsDto>, id: web::Path<String>| async move {
                       HttpResponse::Ok().body(
                         element::api::exists(&id, req.into_inner())
                           .await
@@ -92,18 +92,18 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   ),
                 )
                 .route(
-                  "/content",
-                  web::get().to(
-                    |req: web::Json<GetElement>, id: web::Path<String>| async move {
-                      map_string_to_response(element::api::content(&id, req.into_inner()).await)
+                  "/extract",
+                  web::post().to(
+                    |req: web::Json<ExtractDto>, id: web::Path<String>| async move {
+                      map_string_to_response(element::api::extract(&id, req.into_inner()).await)
                     },
                   ),
                 )
                 .route(
-                  "/evaluate",
+                  "/execute",
                   web::post().to(
-                    |req: web::Json<PostElement>, id: web::Path<String>| async move {
-                      map_unit_to_response(element::api::evaluate(&id, req.into_inner()).await)
+                    |req: web::Json<ExecuteDto>, id: web::Path<String>| async move {
+                      map_unit_to_response(element::api::execute(&id, req.into_inner()).await)
                     },
                   ),
                 ),

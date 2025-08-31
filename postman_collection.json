@@ -53,13 +53,22 @@
 						{
 							"name": "exists",
 							"request": {
-								"method": "GET",
+								"method": "POST",
 								"header": [
 									{
 										"key": "Content-Type",
 										"value": "application/json"
 									}
 								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"selector\": \"button.button.primary.g-recaptcha[type=\\\"submit\\\"]\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
 								"url": {
 									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/exists",
 									"host": [
@@ -79,35 +88,7 @@
 							"response": []
 						},
 						{
-							"name": "content",
-							"request": {
-								"method": "GET",
-								"header": [
-									{
-										"key": "Content-Type",
-										"value": "application/json"
-									}
-								],
-								"url": {
-									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/content",
-									"host": [
-										"{{base_url}}"
-									],
-									"path": [
-										"api",
-										"v1",
-										"tabs",
-										"{{tab_id}}",
-										"element",
-										"content"
-									]
-								},
-								"description": "Get the inner text content of an element on the tab by selector. Returns the text content as raw body."
-							},
-							"response": []
-						},
-						{
-							"name": "evaluate",
+							"name": "extract",
 							"request": {
 								"method": "POST",
 								"header": [
@@ -118,7 +99,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"selector\": \"form#login-form\",\n  \"value\": \"this.submit();\"\n}",
+									"raw": "{\n  \"selector\": \"div.content\",\n  \"attribute\": \"data-value\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -126,7 +107,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/evaluate",
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/extract",
 									"host": [
 										"{{base_url}}"
 									],
@@ -136,10 +117,47 @@
 										"tabs",
 										"{{tab_id}}",
 										"element",
-										"evaluate"
+										"extract"
 									]
 								},
-								"description": "Evaluate JavaScript on an element by selector. The JavaScript is executed in the context of the element."
+								"description": "Extract text content or attribute value from an element on the tab by selector. If attribute is provided, returns the attribute value; otherwise, returns the inner text."
+							},
+							"response": []
+						},
+						{
+							"name": "execute",
+							"request": {
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\n  \"selector\": \"form#login-form\",\n  \"function\": \"submit();\"\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/execute",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"api",
+										"v1",
+										"tabs",
+										"{{tab_id}}",
+										"element",
+										"execute"
+									]
+								},
+								"description": "Execute JavaScript on an element by selector. The JavaScript is executed in the context of the element."
 							},
 							"response": []
 						}
@@ -246,9 +264,9 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{baseUrl}}/api/v1/health",
+					"raw": "{{base_url}}/api/v1/health",
 					"host": [
-						"{{baseUrl}}"
+						"{{base_url}}"
 					],
 					"path": [
 						"api",

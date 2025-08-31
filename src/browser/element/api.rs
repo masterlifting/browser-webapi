@@ -1,7 +1,7 @@
 use headless_chrome::Element;
 use std::sync::Arc;
 
-use crate::browser::element::dto::{GetElement, PostElement};
+use crate::browser::element::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto};
 use crate::browser::tab;
 use crate::models::{Error, ErrorInfo};
 
@@ -21,25 +21,6 @@ pub fn try_find<'a>(tab: &'a Arc<headless_chrome::Tab>, selector: &'a str) -> Op
   tab.wait_for_element(selector).ok()
 }
 
-pub async fn click(tab_id: &str, req: GetElement) -> Result<(), Error> {
-  tab::api::find(tab_id).and_then(|tab| {
-    find(&tab, &req.selector).and_then(|element| {
-      element.click().map(|_| ()).map_err(|e| {
-        Error::Operation(ErrorInfo {
-          message: format!("Failed to click element '{}': {}", req.selector, e),
-          code: None,
-        })
-      })
-    })
-  })
-}
-
-pub async fn exists(tab_id: &str, req: GetElement) -> bool {
-  tab::api::try_find(tab_id)
-    .and_then(|tab| try_find(&tab, &req.selector).map(|_| ()))
-    .is_some()
-}
-
 pub fn fill(element: &Element, value: &str) -> Result<(), String> {
   element
     .type_into(value)
@@ -47,12 +28,12 @@ pub fn fill(element: &Element, value: &str) -> Result<(), String> {
     .map_err(|e| format!("Failed to fill input element '{}': {}", &element.value, e))
 }
 
-pub async fn content(tab_id: &str, req: GetElement) -> Result<String, Error> {
+pub async fn click(tab_id: &str, dto: ClickDto) -> Result<(), Error> {
   tab::api::find(tab_id).and_then(|tab| {
-    find(&tab, &req.selector).and_then(|element| {
-      element.get_inner_text().map_err(|e| {
+    find(&tab, &dto.selector).and_then(|element| {
+      element.click().map(|_| ()).map_err(|e| {
         Error::Operation(ErrorInfo {
-          message: format!("Failed to get content of element '{}': {}", req.selector, e),
+          message: format!("Failed to click element '{}': {}", dto.selector, e),
           code: None,
         })
       })
@@ -60,15 +41,56 @@ pub async fn content(tab_id: &str, req: GetElement) -> Result<String, Error> {
   })
 }
 
-pub async fn evaluate(tab_id: &str, req: PostElement) -> Result<(), Error> {
+pub async fn exists(tab_id: &str, dto: ExistsDto) -> bool {
+  tab::api::try_find(tab_id)
+    .and_then(|tab| try_find(&tab, &dto.selector).map(|_| ()))
+    .is_some()
+}
+
+pub async fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   tab::api::find(tab_id).and_then(|tab| {
-    find(&tab, &req.selector).and_then(|element| {
+    find(&tab, &dto.selector).and_then(|element| match dto.attribute {
+      Some(ref attr_name) => element
+        .get_attribute_value(attr_name)
+        .map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: format!(
+              "Failed to get attribute '{}' of element '{}': {}",
+              attr_name, dto.selector, e
+            ),
+            code: None,
+          })
+        })
+        .and_then(|opt| match opt {
+          Some(value) => Ok(value),
+          None => Err(Error::NotFound(format!(
+            "Attribute '{}' not found on element '{}'",
+            attr_name, dto.selector
+          ))),
+        }),
+      None => element.get_inner_text().map_err(|e| {
+        Error::Operation(ErrorInfo {
+          message: format!("Failed to get content of element '{}': {}", dto.selector, e),
+          code: None,
+        })
+      }),
+    })
+  })
+}
+
+pub async fn execute(tab_id: &str, dto: ExecuteDto) -> Result<(), Error> {
+  tab::api::find(tab_id).and_then(|tab| {
+    find(&tab, &dto.selector).and_then(|element| {
       element
-        .call_js_fn(&format!("function() {{ {} }}", req.value), vec![], true)
+        .call_js_fn(
+          &format!("function() {{ this.{} }}", dto.function),
+          vec![],
+          true,
+        )
         .map(|_| ())
         .map_err(|e| {
           Error::Operation(ErrorInfo {
-            message: format!("Failed to evaluate JS on element '{}': {}", req.selector, e),
+            message: format!("Failed to evaluate JS on element '{}': {}", dto.selector, e),
             code: None,
           })
         })

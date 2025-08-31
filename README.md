@@ -49,8 +49,8 @@ Implemented routes (summary)
 | **GET** | `/api/v1/health` | Health / status |
 | **POST** | `/api/v1/tab/open` | Open a new browser tab |
 | **GET** | `/api/v1/tabs/{id}/close` | Close a tab |
-| **POST** | `/api/v1/tabs/{id}/fill` | Fill form inputs |
+| **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
-| **GET** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
-| **GET** | `/api/v1/tabs/{id}/element/content` | Get element text content |
-| **POST** | `/api/v1/tabs/{id}/element/evaluate` | Evaluate JavaScript on an element |
+| **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
+| **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content or attribute value from an element |
+| **POST** | `/api/v1/tabs/{id}/element/execute` | Execute JavaScript on an element |

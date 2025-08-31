@@ -7,7 +7,7 @@ use url::Url;
 use uuid::Uuid;
 
 use crate::browser::element;
-use crate::browser::tab::dto::{FillRequest, OpenRequest};
+use crate::browser::tab::dto::{FillDto, OpenDto};
 use crate::models::{Error, ErrorInfo};
 
 lazy_static! {
@@ -27,7 +27,7 @@ pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
   TABS.lock().unwrap().get(tab_id).cloned()
 }
 
-pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Error> {
+pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
   fn parse_url(url: &str) -> Result<Url, Error> {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
@@ -95,7 +95,7 @@ pub async fn open(browser: Arc<Browser>, req: OpenRequest) -> Result<String, Err
     Ok(tab_id)
   }
 
-  parse_url(&req.url)
+  parse_url(&dto.url)
     .and_then(|url| open_new_tab(url, browser))
     .and_then(|(url, tab)| call_js(tab, url))
     .and_then(|(url, tab)| navigate_to_url(tab, url))
@@ -124,11 +124,11 @@ pub async fn close(tab_id: &str) -> Result<(), Error> {
     .and_then(|tab| remove_tab(tab_id, tab))
 }
 
-pub async fn fill(tab_id: &str, req: FillRequest) -> Result<(), Error> {
+pub async fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
   find(tab_id).and_then(|tab| {
-    req.inputs.iter().try_for_each(|post_element| {
-      element::api::find(&tab, &post_element.selector).and_then(|element| {
-        element::api::fill(&element, &post_element.value).map_err(|e| {
+    dto.inputs.iter().try_for_each(|input| {
+      element::api::find(&tab, &input.selector).and_then(|element| {
+        element::api::fill(&element, &input.value).map_err(|e| {
           Error::Operation(ErrorInfo {
             message: e,
             code: None,

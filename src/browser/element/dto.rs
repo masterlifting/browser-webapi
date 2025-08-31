@@ -1,12 +1,23 @@
 use serde::Deserialize;
 
 #[derive(Deserialize)]
-pub struct GetElement {
+pub struct ClickDto {
   pub selector: String,
 }
 
 #[derive(Deserialize)]
-pub struct PostElement {
+pub struct ExistsDto {
   pub selector: String,
-  pub value: String,
+}
+
+#[derive(Deserialize)]
+pub struct ExtractDto {
+  pub selector: String,
+  pub attribute: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ExecuteDto {
+  pub selector: String,
+  pub function: String,
 }

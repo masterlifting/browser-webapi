@@ -1,14 +1,18 @@
 use serde::Deserialize;
 
-use crate::browser::element::dto::PostElement;
-
 #[derive(Deserialize)]
-pub struct OpenRequest {
+pub struct OpenDto {
   pub url: String,
   //TODO: add expiration
 }
 
 #[derive(Deserialize)]
-pub struct FillRequest {
-  pub inputs: Vec<PostElement>,
+pub struct InputDto {
+  pub selector: String,
+  pub value: String,
+}
+
+#[derive(Deserialize)]
+pub struct FillDto {
+  pub inputs: Vec<InputDto>,
 }
