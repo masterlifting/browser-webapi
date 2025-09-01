@@ -2,8 +2,8 @@ services:
   browser-api:
     container_name: browser-api
     build:
-      context: .
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: .docker/Dockerfile
     ports:
       - "8080:8080"
     env_file:
