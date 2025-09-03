@@ -43,9 +43,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
           "/open",
           web::post().to(
             |req: web::Json<OpenDto>, browser: web::Data<Arc<Browser>>| async move {
-              map_string_to_response(
-                tab::api::open(browser.get_ref().clone(), req.into_inner()).await,
-              )
+              map_string_to_response(tab::api::open(browser.get_ref().clone(), req.into_inner()))
             },
           ),
         ))
@@ -54,21 +52,21 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             .route(
               "/close",
               web::get().to(|id: web::Path<String>| async move {
-                map_unit_to_response(tab::api::close(&id).await)
+                map_unit_to_response(tab::api::close(&id))
               }),
             )
             .route(
               "/fill",
               web::post().to(
                 |req: web::Json<FillDto>, id: web::Path<String>| async move {
-                  map_unit_to_response(tab::api::fill(&id, req.into_inner()).await)
+                  map_unit_to_response(tab::api::fill(&id, req.into_inner()))
                 },
               ),
             )
             .route(
               "/humanize",
               web::post().to(|id: web::Path<String>| async move {
-                map_unit_to_response(tab::api::humanize(&id).await)
+                map_unit_to_response(tab::api::humanize(&id))
               }),
             )
             .service(
@@ -77,7 +75,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   "/click",
                   web::post().to(
                     |req: web::Json<ClickDto>, id: web::Path<String>| async move {
-                      map_unit_to_response(element::api::click(&id, req.into_inner()).await)
+                      map_unit_to_response(element::api::click(&id, req.into_inner()))
                     },
                   ),
                 )
@@ -85,11 +83,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   "/exists",
                   web::post().to(
                     |req: web::Json<ExistsDto>, id: web::Path<String>| async move {
-                      HttpResponse::Ok().body(
-                        element::api::exists(&id, req.into_inner())
-                          .await
-                          .to_string(),
-                      )
+                      HttpResponse::Ok()
+                        .body(element::api::exists(&id, req.into_inner()).to_string())
                     },
                   ),
                 )
@@ -97,7 +92,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   "/extract",
                   web::post().to(
                     |req: web::Json<ExtractDto>, id: web::Path<String>| async move {
-                      map_string_to_response(element::api::extract(&id, req.into_inner()).await)
+                      map_string_to_response(element::api::extract(&id, req.into_inner()))
                     },
                   ),
                 )
@@ -105,7 +100,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   "/execute",
                   web::post().to(
                     |req: web::Json<ExecuteDto>, id: web::Path<String>| async move {
-                      map_unit_to_response(element::api::execute(&id, req.into_inner()).await)
+                      map_unit_to_response(element::api::execute(&id, req.into_inner()))
                     },
                   ),
                 ),

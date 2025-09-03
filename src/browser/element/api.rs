@@ -29,7 +29,7 @@ pub fn fill(element: &Element, value: &str) -> Result<(), String> {
     .map_err(|e| format!("Failed to fill input element '{}': {}", &element.value, e))
 }
 
-pub async fn click(tab_id: &str, dto: ClickDto) -> Result<(), Error> {
+pub fn click(tab_id: &str, dto: ClickDto) -> Result<(), Error> {
   tab::api::find(tab_id).and_then(|tab| {
     find(&tab, &dto.selector).and_then(|element| {
       element.click().map(|_| ()).map_err(|e| {
@@ -42,13 +42,13 @@ pub async fn click(tab_id: &str, dto: ClickDto) -> Result<(), Error> {
   })
 }
 
-pub async fn exists(tab_id: &str, dto: ExistsDto) -> bool {
+pub fn exists(tab_id: &str, dto: ExistsDto) -> bool {
   tab::api::try_find(tab_id)
     .and_then(|tab| try_find(&tab, &dto.selector).map(|_| ()))
     .is_some()
 }
 
-pub async fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
+pub fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   tab::api::find(tab_id).and_then(|tab| {
     find(&tab, &dto.selector).and_then(|element| match dto.attribute {
       Some(ref attr_name) => element
@@ -79,7 +79,7 @@ pub async fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   })
 }
 
-pub async fn execute(tab_id: &str, dto: ExecuteDto) -> Result<(), Error> {
+pub fn execute(tab_id: &str, dto: ExecuteDto) -> Result<(), Error> {
   tab::api::find(tab_id).and_then(|tab| {
     find(&tab, &dto.selector).and_then(|element| {
       element

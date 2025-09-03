@@ -23,11 +23,12 @@ pub fn find(tab_id: &str) -> Result<Arc<Tab>, Error> {
     .ok_or_else(|| Error::NotFound(format!("tab_id {tab_id}")))
 }
 
-#[must_use] pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
+#[must_use]
+pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
   TABS.lock().unwrap().get(tab_id).cloned()
 }
 
-pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
+pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
   fn parse_url(url: &str) -> Result<Url, Error> {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
@@ -103,7 +104,7 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
     .and_then(add_tab)
 }
 
-pub async fn close(tab_id: &str) -> Result<(), Error> {
+pub fn close(tab_id: &str) -> Result<(), Error> {
   fn close_tab(tab: Arc<Tab>) -> Result<Arc<Tab>, Error> {
     tab.close(true).map(|_| tab).map_err(|e| {
       Error::Operation(ErrorInfo {
@@ -124,7 +125,7 @@ pub async fn close(tab_id: &str) -> Result<(), Error> {
     .and_then(|tab| remove_tab(tab_id, tab))
 }
 
-pub async fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
+pub fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
   find(tab_id).and_then(|tab| {
     dto.inputs.iter().try_for_each(|input| {
       element::api::find(&tab, &input.selector).and_then(|element| {
@@ -139,7 +140,7 @@ pub async fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
   })
 }
 
-pub async fn humanize(tab_id: &str) -> Result<(), Error> {
+pub fn humanize(tab_id: &str) -> Result<(), Error> {
   find(tab_id)
     .and_then(|tab| {
       tab
