@@ -18,15 +18,11 @@ fn map_error_to_response(e: Error) -> HttpResponse {
 }
 
 fn map_string_to_response(res: Result<String, Error>) -> HttpResponse {
-  res
-    .map(|s| HttpResponse::Ok().body(s))
-    .unwrap_or_else(map_error_to_response)
+  res.map_or_else(map_error_to_response, |s| HttpResponse::Ok().body(s))
 }
 
 fn map_unit_to_response(res: Result<(), Error>) -> HttpResponse {
-  res
-    .map(|_| HttpResponse::Ok().finish())
-    .unwrap_or_else(map_error_to_response)
+  res.map_or_else(map_error_to_response, |()| HttpResponse::Ok().finish())
 }
 
 pub fn configure(cfg: &mut web::ServiceConfig) {

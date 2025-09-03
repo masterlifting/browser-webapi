@@ -11,12 +11,13 @@ pub fn find<'a>(
 ) -> Result<Element<'a>, Error> {
   tab.wait_for_element(selector).map_err(|e| {
     Error::Operation(ErrorInfo {
-      message: format!("Failed to find element with selector '{}': {}", selector, e),
+      message: format!("Failed to find element with selector '{selector}': {e}"),
       code: None,
     })
   })
 }
 
+#[must_use]
 pub fn try_find<'a>(tab: &'a Arc<headless_chrome::Tab>, selector: &'a str) -> Option<Element<'a>> {
   tab.wait_for_element(selector).ok()
 }

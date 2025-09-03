@@ -1,6 +1,6 @@
 use headless_chrome::{Browser, LaunchOptionsBuilder};
 use std::ffi::OsStr;
-use std::io::{Error, ErrorKind};
+use std::io::Error;
 use std::sync::Arc;
 
 use crate::browser::models::LaunchOptions;
@@ -38,14 +38,13 @@ pub fn launch(options: LaunchOptions) -> Result<Arc<Browser>, Error> {
       .map(OsStr::new)
       .collect::<Vec<_>>())
     .build()
-    .map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
+    .map_err(|e| Error::other(e.to_string()))
     .and_then(|options| {
       Browser::new(options)
         .map(Arc::new)
-        .map(|browser| {
+        .inspect(|browser| {
           tracing::info!("Browser launched successfully");
-          browser
         })
-        .map_err(|e| Error::new(ErrorKind::Other, e.to_string()))
+        .map_err(|e| Error::other(e.to_string()))
     })
 }

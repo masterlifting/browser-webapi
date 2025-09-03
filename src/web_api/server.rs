@@ -25,7 +25,7 @@ pub async fn run(browser: Arc<Browser>) -> std::io::Result<()> {
       .app_data(web::Data::new(browser.clone()))
       .configure(crate::web_api::routes::configure)
   })
-  .bind(format!("{}:{}", host, port))?
+  .bind(format!("{host}:{port}"))?
   .run()
   .await
 }

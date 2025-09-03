@@ -20,6 +20,7 @@ impl LaunchOptions {
   /// Notes:
   /// - The only guaranteed panic is from the required `USER_DATA_DIR` lookup. Parsing errors for `USE_UI`
   ///   and `IDLE_TIMEOUT_DAYS` are handled by using sensible defaults.
+  #[must_use]
   pub fn from_env() -> Self {
     let user_data_dir = env::var("USER_DATA_DIR").expect("USER_DATA_DIR");
 

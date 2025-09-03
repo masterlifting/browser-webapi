@@ -20,10 +20,10 @@ pub fn find(tab_id: &str) -> Result<Arc<Tab>, Error> {
     .unwrap()
     .get(tab_id)
     .cloned()
-    .ok_or_else(|| Error::NotFound(format!("tab_id {}", tab_id)))
+    .ok_or_else(|| Error::NotFound(format!("tab_id {tab_id}")))
 }
 
-pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
+#[must_use] pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
   TABS.lock().unwrap().get(tab_id).cloned()
 }
 
@@ -31,7 +31,7 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
   fn parse_url(url: &str) -> Result<Url, Error> {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
-        message: format!("Invalid URL: {}", e),
+        message: format!("Invalid URL: {e}"),
         code: None,
       })
     })
@@ -40,7 +40,7 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
   fn open_new_tab(url: Url, browser: Arc<Browser>) -> Result<(Url, Arc<Tab>), Error> {
     browser.new_tab().map(|tab| (url, tab)).map_err(|e| {
       Error::Operation(ErrorInfo {
-        message: format!("Failed to create new tab: {}", e),
+        message: format!("Failed to create new tab: {e}"),
         code: None,
       })
     })
@@ -49,17 +49,17 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
   fn call_js(tab: Arc<Tab>, url: Url) -> Result<(Url, Arc<Tab>), Error> {
     tab
       .evaluate(
-        r#"
+        r"
             Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
             window.navigator.chrome = { runtime: {} };
             Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
-            Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });"#,
+            Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });",
         true,
       )
       .map(|_| (url, tab.clone()))
       .map_err(|e| {
         Error::Operation(ErrorInfo {
-          message: format!("Failed to call JS: {}", e),
+          message: format!("Failed to call JS: {e}"),
           code: None,
         })
       })
@@ -67,11 +67,11 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
 
   fn navigate_to_url(tab: Arc<Tab>, url: Url) -> Result<Arc<Tab>, Error> {
     tab
-      .navigate_to(&url.as_str())
+      .navigate_to(url.as_str())
       .map(|_| tab.clone())
       .map_err(|e| {
         Error::Operation(ErrorInfo {
-          message: format!("Failed to navigate to URL: {}", e),
+          message: format!("Failed to navigate to URL: {e}"),
           code: None,
         })
       })
@@ -83,7 +83,7 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
       .map(|_| tab.clone())
       .map_err(|e| {
         Error::Operation(ErrorInfo {
-          message: format!("Failed to wait for navigation: {}", e),
+          message: format!("Failed to wait for navigation: {e}"),
           code: None,
         })
       })
@@ -107,7 +107,7 @@ pub async fn close(tab_id: &str) -> Result<(), Error> {
   fn close_tab(tab: Arc<Tab>) -> Result<Arc<Tab>, Error> {
     tab.close(true).map(|_| tab).map_err(|e| {
       Error::Operation(ErrorInfo {
-        message: format!("Failed to close tab: {}", e),
+        message: format!("Failed to close tab: {e}"),
         code: None,
       })
     })
@@ -144,7 +144,7 @@ pub async fn humanize(tab_id: &str) -> Result<(), Error> {
     .and_then(|tab| {
       tab
         .evaluate(
-          r#"
+          r"
             if (window.innerWidth > 800) {
               window.resizeTo(window.innerWidth + Math.floor(Math.random() * 100) - 50, window.innerHeight + Math.floor(Math.random() * 100) - 50);
             }
@@ -152,13 +152,13 @@ pub async fn humanize(tab_id: &str) -> Result<(), Error> {
             Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => Math.floor(Math.random() * 8) + 4 });
             document.dispatchEvent(new MouseEvent('mousemove', { clientX: Math.random() * window.innerWidth, clientY: Math.random() * window.innerHeight }));
             true
-          "#,
+          ",
           true,
         )
         .map(|_| tab.clone())
         .map_err(|e| {
           Error::Operation(ErrorInfo {
-            message: format!("Failed to humanize tab: {}", e),
+            message: format!("Failed to humanize tab: {e}"),
             code: None,
           })
         })
