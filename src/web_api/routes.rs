@@ -51,7 +51,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
           web::scope("/tabs/{id}")
             .route(
               "/close",
-              web::get().to(|id: web::Path<String>| async move {
+              web::delete().to(|id: web::Path<String>| async move {
                 map_unit_to_response(tab::api::close(&id))
               }),
             )

@@ -48,7 +48,7 @@ Implemented routes (summary)
 |---|---|---|
 | **GET** | `/api/v1/health` | Health / status |
 | **POST** | `/api/v1/tab/open` | Open a new browser tab |
-| **GET** | `/api/v1/tabs/{id}/close` | Close a tab |
+| **DELETE** | `/api/v1/tabs/{id}/close` | Close a tab |
 | **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
 | **POST** | `/api/v1/tabs/{id}/humanize` | Apply human-like behaviors to avoid detection |
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |

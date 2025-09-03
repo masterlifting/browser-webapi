@@ -201,7 +201,7 @@
 				{
 					"name": "close",
 					"request": {
-						"method": "GET",
+						"method": "DELETE",
 						"header": [],
 						"url": {
 							"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/close",
@@ -216,7 +216,7 @@
 								"close"
 							]
 						},
-						"description": "Close a tab by id (GET). Provide id as path variable."
+						"description": "Close a tab by id (DELETE). Provide id as path variable."
 					},
 					"response": []
 				},
