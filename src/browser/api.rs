@@ -5,10 +5,17 @@ use std::sync::Arc;
 
 use crate::browser::models::LaunchOptions;
 
+/// Launches a new headless Chrome browser instance with the given options.
+///
+/// # Errors
+///
+/// Returns an `Error` if:
+/// * Building the launch options fails
+/// * Creating the browser instance fails
 pub fn launch(options: LaunchOptions) -> Result<Arc<Browser>, Error> {
   LaunchOptionsBuilder::default()
     .headless(options.headless)
-    .path(Some(std::path::PathBuf::from(options.user_data_dir)))
+    .path(options.binary_data_dir)
     .disable_default_args(true)
     .ignore_certificate_errors(false)
     .window_size(Some((1920, 1080)))
@@ -32,6 +39,7 @@ pub fn launch(options: LaunchOptions) -> Result<Arc<Browser>, Error> {
         "--disable-web-security",
         "--disable-extensions",
         "--no-default-browser-check",
+        &format!("--user-data-dir={}", options.user_data_dir),
         "--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
       ]
       .iter()

@@ -5,6 +5,11 @@ use crate::browser::element::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto};
 use crate::browser::tab;
 use crate::models::{Error, ErrorInfo};
 
+/// Finds an element in the tab using the given selector.
+///
+/// # Errors
+///
+/// Returns an `Error` if the element with the selector is not found or waiting for it fails.
 pub fn find<'a>(
   tab: &'a Arc<headless_chrome::Tab>,
   selector: &'a str,
@@ -22,6 +27,11 @@ pub fn try_find<'a>(tab: &'a Arc<headless_chrome::Tab>, selector: &'a str) -> Op
   tab.wait_for_element(selector).ok()
 }
 
+/// Fills the element with the given value.
+///
+/// # Errors
+///
+/// Returns a `String` describing the error if filling the element fails.
 pub fn fill(element: &Element, value: &str) -> Result<(), String> {
   element
     .type_into(value)
@@ -29,6 +39,14 @@ pub fn fill(element: &Element, value: &str) -> Result<(), String> {
     .map_err(|e| format!("Failed to fill input element '{}': {}", &element.value, e))
 }
 
+/// Clicks the element with the given selector in the tab.
+///
+/// # Errors
+///
+/// Returns an `Error` if:
+/// * The tab is not found
+/// * The element is not found
+/// * Clicking the element fails
 pub fn click(tab_id: &str, dto: ClickDto) -> Result<(), Error> {
   tab::api::find(tab_id).and_then(|tab| {
     find(&tab, &dto.selector).and_then(|element| {
@@ -42,12 +60,22 @@ pub fn click(tab_id: &str, dto: ClickDto) -> Result<(), Error> {
   })
 }
 
+#[must_use]
 pub fn exists(tab_id: &str, dto: ExistsDto) -> bool {
   tab::api::try_find(tab_id)
     .and_then(|tab| try_find(&tab, &dto.selector).map(|_| ()))
     .is_some()
 }
 
+/// Extracts content or attribute from the element with the given selector in the tab.
+///
+/// # Errors
+///
+/// Returns an `Error` if:
+/// * The tab is not found
+/// * The element is not found
+/// * Getting the attribute or content fails
+/// * The attribute is not present (when specified)
 pub fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   tab::api::find(tab_id).and_then(|tab| {
     find(&tab, &dto.selector).and_then(|element| match dto.attribute {
@@ -79,6 +107,14 @@ pub fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   })
 }
 
+/// Executes a JavaScript function on the element with the given selector in the tab.
+///
+/// # Errors
+///
+/// Returns an `Error` if:
+/// * The tab is not found
+/// * The element is not found
+/// * Evaluating the JavaScript fails
 pub fn execute(tab_id: &str, dto: ExecuteDto) -> Result<(), Error> {
   tab::api::find(tab_id).and_then(|tab| {
     find(&tab, &dto.selector).and_then(|element| {

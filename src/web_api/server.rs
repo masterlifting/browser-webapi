@@ -3,6 +3,28 @@ use headless_chrome::Browser;
 use std::{env, sync::Arc};
 use tracing_actix_web::TracingLogger;
 
+/// Starts an HTTP server with the provided browser instance.
+///
+/// This function configures and starts an Actix web server with CORS support,
+/// request logging via `TracingLogger`, and routes defined in the application.
+/// The server host and port can be configured via environment variables
+/// `SERVER_HOST` and `SERVER_PORT`, with defaults of "127.0.0.1" and "8080"
+/// respectively.
+///
+/// # Arguments
+///
+/// * `browser` - A thread-safe reference to a headless Chrome browser instance
+///   that will be shared with request handlers.
+///
+/// # Returns
+///
+/// A `std::io::Result<()>` that resolves when the server has completed running.
+///
+/// # Errors
+///
+/// This function will return an error if:
+/// * The server fails to bind to the specified host:port combination
+/// * The underlying Actix server encounters an error during operation
 pub async fn run(browser: Arc<Browser>) -> std::io::Result<()> {
   let host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
   let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8080".to_string());

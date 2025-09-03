@@ -24,7 +24,6 @@ chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
 url = "2.5"
 regex = "1.10"
-lazy_static = "1.5"
 
 [dev-dependencies]
 mockito = "1.5"

@@ -107,5 +107,5 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
             ),
         ),
     )
-    .default_service(web::to(|| async { HttpResponse::NotFound() }));
+    .default_service(web::to(HttpResponse::NotFound));
 }

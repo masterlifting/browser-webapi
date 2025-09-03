@@ -1,7 +1,8 @@
-use std::env;
+use std::{env, path::PathBuf};
 
 pub struct LaunchOptions {
   pub headless: bool,
+  pub binary_data_dir: Option<PathBuf>,
   pub user_data_dir: String,
   pub idle_timeout: std::time::Duration,
 }
@@ -20,9 +21,14 @@ impl LaunchOptions {
   /// Notes:
   /// - The only guaranteed panic is from the required `USER_DATA_DIR` lookup. Parsing errors for `USE_UI`
   ///   and `IDLE_TIMEOUT_DAYS` are handled by using sensible defaults.
+  /// # Panics
+  ///
+  /// Panics if the `USER_DATA_DIR` environment variable is not set.
   #[must_use]
   pub fn from_env() -> Self {
     let user_data_dir = env::var("USER_DATA_DIR").expect("USER_DATA_DIR");
+
+    let binary_data_dir = env::var("BINARY_DATA_DIR").ok().map(PathBuf::from);
 
     let use_ui = env::var("USE_UI")
       .unwrap_or_else(|_| "false".to_string())
@@ -36,6 +42,7 @@ impl LaunchOptions {
 
     Self {
       headless: !use_ui,
+      binary_data_dir,
       user_data_dir,
       idle_timeout: std::time::Duration::from_secs(idle_timeout_days * 60 * 60 * 24),
     }
