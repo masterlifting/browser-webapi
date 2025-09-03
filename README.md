@@ -40,7 +40,10 @@ This README provides a short, accurate API summary. For full request/response ex
 Postman collection
 
 You can find the Postman collection in the repository root: [postman_collection.json](./postman_collection.json).
-Import it into Postman (File → Import or drag-and-drop) and set the collection variables `base_url` and `tab_id` before running requests.
+Import it into Postman (File → Import or drag-and-drop).
+Use the collection variables:
+- `base_url` as `http://localhost:8080`
+- `tab_id` should be set after opening a new tab using the result from the `/api/v1/tab/open` endpoint.
 
 Implemented routes (summary)
 
