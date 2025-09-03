@@ -1,7 +1,10 @@
 services:
   browser-webapi:
     container_name: browser-webapi
-    image: ponkorn/browser-webapi:1.0.0
+    image: ponkorn/browser-webapi:dev
+    build:
+      context: ..
+      dockerfile: .docker/Dockerfile
     ports:
       - 8080:8080
     environment:

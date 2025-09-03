@@ -355,7 +355,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "browser_api"
+name = "browser-webapi"
 version = "1.0.0"
 dependencies = [
  "actix-cors",

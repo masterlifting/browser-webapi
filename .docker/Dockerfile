@@ -14,14 +14,14 @@ WORKDIR /app
 COPY Cargo.toml Cargo.lock ./
 RUN mkdir -p src && echo 'fn main() {}' > src/main.rs && \
     cargo build --release --target x86_64-unknown-linux-musl && \
-    rm -rf src target/x86_64-unknown-linux-musl/release/deps/browser_api*
+    rm -rf src target/x86_64-unknown-linux-musl/release/deps/browser_webapi*
 
 # Copy the actual source code
 COPY src ./src/
 
 # Build the application with optimizations
 RUN cargo build --release --target x86_64-unknown-linux-musl && \
-    strip target/x86_64-unknown-linux-musl/release/browser_api
+    strip target/x86_64-unknown-linux-musl/release/browser-webapi
 
 # Stage 2: Create the minimal runtime image
 FROM zenika/alpine-chrome:124
@@ -29,8 +29,8 @@ FROM zenika/alpine-chrome:124
 WORKDIR /app
 
 # Copy the compiled binary from the builder stage
-COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/browser_api ./browser_api
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/browser-webapi ./browser-webapi
 
 # Override the default ENTRYPOINT from the base image
 ENTRYPOINT []
-CMD ["./browser_api"]
+CMD ["./browser-webapi"]

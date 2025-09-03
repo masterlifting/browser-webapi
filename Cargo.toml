@@ -1,10 +1,10 @@
 [package]
-name = "browser_api"
+name = "browser-webapi"
 version = "1.0.0"
 edition = "2024"
 authors = ["Andrei Pestunov <masterlifting@gmail.com>"]
 description = "A web API for browser automation using headless Chrome"
-repository = "https://github.com/yourusername/browser-automation-webapi"
+repository = "https://github.com/masterlifting/browser-webapi"
 readme = "README.md"
 keywords = ["browser", "automation", "web", "api", "headless"]
 license = "MIT"
