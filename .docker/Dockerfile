@@ -1,36 +1,36 @@
 # Stage 1: Build the Rust application
-FROM rust:latest AS builder
+FROM rust:1.89-slim-bookworm AS builder
+
+# Install musl tools for cross-compilation to Alpine
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    musl-dev \
+    musl-tools \
+    && rm -rf /var/lib/apt/lists/* \
+    && rustup target add x86_64-unknown-linux-musl
 
 WORKDIR /app
 
-# Copy Cargo.toml and Cargo.lock to leverage Docker's caching
+# Copy only dependency files first for better caching
 COPY Cargo.toml Cargo.lock ./
+RUN mkdir -p src && echo 'fn main() {}' > src/main.rs && \
+    cargo build --release --target x86_64-unknown-linux-musl && \
+    rm -rf src target/x86_64-unknown-linux-musl/release/deps/browser_api*
 
-# Build dependencies first to optimize caching
-RUN mkdir -p src && echo 'fn main() {}' > src/main.rs && cargo build --release && rm -rf src
+# Copy the actual source code
+COPY src ./src/
 
-# Copy the entire source code
-COPY . .
-
-# Build the final release binary
-RUN cargo build --release
+# Build the application with optimizations
+RUN cargo build --release --target x86_64-unknown-linux-musl && \
+    strip target/x86_64-unknown-linux-musl/release/browser_api
 
 # Stage 2: Create the minimal runtime image
-FROM debian:bullseye-slim
-
-# Create a non-privileged user
-RUN useradd -ms /bin/bash appuser
-
-# Switch to the non-privileged user
-USER appuser
+FROM zenika/alpine-chrome:124
 
 WORKDIR /app
 
 # Copy the compiled binary from the builder stage
-COPY --from=builder /app/target/release/browser_api ./browser_api
+COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/browser_api ./browser_api
 
-# Expose the port if your application is a web server
-EXPOSE 8080
-
-# Command to run the application
+# Override the default ENTRYPOINT from the base image
+ENTRYPOINT []
 CMD ["./browser_api"]
