@@ -30,7 +30,6 @@ pub fn launch(options: LaunchOptions) -> Result<Arc<Browser>, Error> {
         "--no-zygote",
         "--disable-namespace-sandbox",
         "--disable-seccomp-filter-sandbox",
-        "--single-process",
         "--disable-gpu",
         "--hide-scrollbars",
         "--mute-audio",

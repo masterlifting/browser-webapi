@@ -11,5 +11,5 @@ services:
       - SERVER_PORT=8080
       - USE_UI=false
       - BINARY_DATA_DIR=/usr/bin/chromium-browser
-      - USER_DATA_DIR=/chrome_temp
+      - USER_DATA_DIR=/tmp/chrome_temp
       - IDLE_TIMEOUT_DAYS=7
