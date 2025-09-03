@@ -65,8 +65,8 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     })
   }
 
-  fn open_new_tab(url: Url, browser: Arc<Browser>) -> Result<(Url, Arc<Tab>), Error> {
-    browser.new_tab().map(|tab| (url, tab)).map_err(|e| {
+  fn open_new_tab(url: Url, browser: Arc<Browser>) -> Result<(Arc<Tab>, Url), Error> {
+    browser.new_tab().map(|tab| (tab, url)).map_err(|e| {
       Error::Operation(ErrorInfo {
         message: format!("Failed to create new tab: {e}"),
         code: None,
@@ -74,7 +74,7 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     })
   }
 
-  fn call_js(tab: Arc<Tab>, url: Url) -> Result<(Url, Arc<Tab>), Error> {
+  fn call_js((tab, url): (Arc<Tab>, Url)) -> Result<(Arc<Tab>, Url), Error> {
     tab
       .evaluate(
         r"
@@ -84,7 +84,7 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
             Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });",
         true,
       )
-      .map(|_| (url, tab))
+      .map(|_| (tab, url))
       .map_err(|e| {
         Error::Operation(ErrorInfo {
           message: format!("Failed to call JS: {e}"),
@@ -93,7 +93,7 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
       })
   }
 
-  fn navigate_to_url(tab: Arc<Tab>, url: Url) -> Result<Arc<Tab>, Error> {
+  fn navigate_to_url((tab, url): (Arc<Tab>, Url)) -> Result<Arc<Tab>, Error> {
     match tab.navigate_to(url.as_str()) {
       Ok(_) => Ok(tab),
       Err(e) => Err(Error::Operation(ErrorInfo {
@@ -121,8 +121,8 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
 
   parse_url(&dto.url)
     .and_then(|url| open_new_tab(url, browser))
-    .and_then(|(url, tab)| call_js(tab, url))
-    .and_then(|(url, tab)| navigate_to_url(tab, url))
+    .and_then(call_js)
+    .and_then(navigate_to_url)
     .and_then(wait_for_navigation)
     .map(store_tab)
 }
@@ -139,9 +139,8 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
 ///
 /// Panics if the internal mutex is poisoned.
 pub fn close(tab_id: &str) -> Result<(), Error> {
-  fn close_tab(tab: &Arc<Tab>) -> Result<Arc<Tab>, Error> {
-    let tab = tab.clone();
-    tab.close(true).map(|_| tab).map_err(|e| {
+  fn close_tab(tab: Arc<Tab>) -> Result<(), Error> {
+    tab.close(true).map(|_| ()).map_err(|e| {
       Error::Operation(ErrorInfo {
         message: format!("Failed to close tab: {e}"),
         code: None,
@@ -149,13 +148,11 @@ pub fn close(tab_id: &str) -> Result<(), Error> {
     })
   }
 
-  fn remove_tab(tab_id: &str, _tab: &Arc<Tab>) {
+  fn remove_tab(tab_id: &str) {
     TABS.lock().unwrap().remove(tab_id);
   }
 
-  find(tab_id)
-    .and_then(|tab| close_tab(&tab))
-    .map(|tab| remove_tab(tab_id, &tab))
+  find(tab_id).and_then(close_tab).map(|_| remove_tab(tab_id))
 }
 
 /// Fills form inputs in the tab with the specified values.
