@@ -74,25 +74,6 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     })
   }
 
-  fn call_js((tab, url): (Arc<Tab>, Url)) -> Result<(Arc<Tab>, Url), Error> {
-    tab
-      .evaluate(
-        r"
-            Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
-            window.navigator.chrome = { runtime: {} };
-            Object.defineProperty(navigator, 'plugins', { get: () => [1,2,3,4,5] });
-            Object.defineProperty(navigator, 'languages', { get: () => ['en-US','en'] });",
-        true,
-      )
-      .map(|_| (tab, url))
-      .map_err(|e| {
-        Error::Operation(ErrorInfo {
-          message: format!("Failed to call JS: {e}"),
-          code: None,
-        })
-      })
-  }
-
   fn navigate_to_url((tab, url): (Arc<Tab>, Url)) -> Result<Arc<Tab>, Error> {
     match tab.navigate_to(url.as_str()) {
       Ok(_) => Ok(tab),
@@ -121,7 +102,6 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
 
   parse_url(&dto.url)
     .and_then(|url| open_new_tab(url, browser))
-    .and_then(call_js)
     .and_then(navigate_to_url)
     .and_then(wait_for_navigation)
     .map(store_tab)

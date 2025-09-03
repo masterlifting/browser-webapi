@@ -1,8 +1,8 @@
 {
 	"info": {
 		"_postman_id": "7e1609df-0f82-4d31-b43a-e71759721dde",
-		"name": "browser-webapi",
-		"description": "Postman collection matching current non-mocked routes in routes.rs",
+		"name": "Browser WebAPI - Google.com Examples",
+		"description": "Postman collection with examples using Google.com for testing browser automation API",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "11034163"
 	},
@@ -25,7 +25,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"selector\": \"button.button.primary.g-recaptcha[type=\\\"submit\\\"]\"\n}",
+									"raw": "{\n  \"selector\": \"input[value='Google Search']\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -62,7 +62,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"selector\": \"button.button.primary.g-recaptcha[type=\\\"submit\\\"]\"\n}",
+									"raw": "{\n  \"selector\": \"#search\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -99,7 +99,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"selector\": \"div.content\",\n  \"attribute\": \"data-value\"\n}",
+									"raw": "{\n  \"selector\": \"title\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -136,7 +136,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"selector\": \"form#login-form\",\n  \"function\": \"submit();\"\n}",
+									"raw": "{\n  \"selector\": \"body\",\n  \"function\": \"scrollTo(0, 500);\"\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -175,7 +175,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"url\": \"https://prenotami.esteri.it\"\n}",
+							"raw": "{\n  \"url\": \"https://www.google.com\"\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -232,7 +232,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"inputs\": [\n    { \"selector\": \"#login-email\", \"value\": \"masterlifting@gmail.com\" },\n    { \"selector\": \"#login-password\", \"value\": \"\" }\n  ]\n}",
+							"raw": "{\n  \"inputs\": [\n    {\n      \"selector\": \"textarea[name='q']\",\n      \"value\": \"Rust programming language\"\n    }\n  ]\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -318,7 +318,12 @@
 				"type": "text/javascript",
 				"packages": {},
 				"exec": [
-					""
+					"// Auto-set tab_id from open tab response",
+					"if (pm.request.url.path.includes('open') && pm.response.code === 200) {",
+					"    const tabId = pm.response.text();",
+					"    pm.collectionVariables.set('tab_id', tabId);",
+					"    console.log('Tab ID set to:', tabId);",
+					"}"
 				]
 			}
 		}
@@ -326,11 +331,14 @@
 	"variable": [
 		{
 			"key": "base_url",
-			"value": "http://localhost:8080"
+			"value": "http://localhost:8080",
+			"type": "string"
 		},
 		{
 			"key": "tab_id",
-			"value": "<tab-id>"
+			"value": "",
+			"type": "string",
+			"description": "Tab ID returned from open tab request"
 		}
 	]
 }

@@ -49,10 +49,6 @@ For full request/response examples and ready-to-run requests, import the include
 You can find the Postman collection in the repository root: [postman_collection.json](./postman_collection.json).
 Import it into Postman (File → Import or drag-and-drop).
 
-**Set the collection variables:**
-- `base_url` as `http://localhost:8080`
-- `tab_id` should be set after opening a new tab using the result from the `/api/v1/tab/open` endpoint.
-
 ### Implemented routes
 
 | Method | Endpoint | Description |
