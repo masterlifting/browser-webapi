@@ -113,7 +113,7 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     }
   }
 
-  fn add_tab(tab: Arc<Tab>) -> String {
+  fn store_tab(tab: Arc<Tab>) -> String {
     let tab_id = Uuid::new_v4().to_string();
     TABS.lock().unwrap().insert(tab_id.clone(), tab);
     tab_id
@@ -123,8 +123,8 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     .and_then(|url| open_new_tab(url, browser))
     .and_then(|(url, tab)| call_js(tab, url))
     .and_then(|(url, tab)| navigate_to_url(tab, url))
-    .and_then(|tab| wait_for_navigation(tab))
-    .map(add_tab)
+    .and_then(wait_for_navigation)
+    .map(store_tab)
 }
 
 /// Closes the tab with the specified ID.
