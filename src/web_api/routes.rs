@@ -69,6 +69,12 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 },
               ),
             )
+            .route(
+              "/humanize",
+              web::post().to(|id: web::Path<String>| async move {
+                map_unit_to_response(tab::api::humanize(&id).await)
+              }),
+            )
             .service(
               web::scope("/element")
                 .route(

@@ -138,3 +138,30 @@ pub async fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
     })
   })
 }
+
+pub async fn humanize(tab_id: &str) -> Result<(), Error> {
+  find(tab_id)
+    .and_then(|tab| {
+      tab
+        .evaluate(
+          r#"
+            if (window.innerWidth > 800) {
+              window.resizeTo(window.innerWidth + Math.floor(Math.random() * 100) - 50, window.innerHeight + Math.floor(Math.random() * 100) - 50);
+            }
+            window.scrollTo(0, Math.floor(Math.random() * 100));
+            Object.defineProperty(navigator, 'hardwareConcurrency', { get: () => Math.floor(Math.random() * 8) + 4 });
+            document.dispatchEvent(new MouseEvent('mousemove', { clientX: Math.random() * window.innerWidth, clientY: Math.random() * window.innerHeight }));
+            true
+          "#,
+          true,
+        )
+        .map(|_| tab.clone())
+        .map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: format!("Failed to humanize tab: {}", e),
+            code: None,
+          })
+        })
+    })
+    .map(|_| ())
+}
