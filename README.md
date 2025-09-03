@@ -50,6 +50,7 @@ Implemented routes (summary)
 | **POST** | `/api/v1/tab/open` | Open a new browser tab |
 | **GET** | `/api/v1/tabs/{id}/close` | Close a tab |
 | **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
+| **POST** | `/api/v1/tabs/{id}/humanize` | Apply human-like behaviors to avoid detection |
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
 | **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
 | **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content or attribute value from an element |

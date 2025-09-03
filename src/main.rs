@@ -1,4 +1,5 @@
-#![warn(clippy::all, clippy::pedantic)]
+#![warn(clippy::all)]
+#![allow(clippy::needless_pass_by_value)]
 
 pub mod browser;
 pub mod models;

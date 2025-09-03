@@ -255,6 +255,28 @@
 						"description": "Fill multiple input elements on the tab. Provide tab id as path variable 'id'."
 					},
 					"response": []
+				},
+				{
+					"name": "humanize",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/humanize",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tabs",
+								"{{tab_id}}",
+								"humanize"
+							]
+						},
+						"description": "Apply human-like behaviors to the tab to avoid detection. No request body required."
+					},
+					"response": []
 				}
 			]
 		},
