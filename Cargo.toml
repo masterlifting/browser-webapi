@@ -17,17 +17,10 @@ tracing-actix-web = "0.7"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 actix-web = "4.11"
-actix-rt = "2.11"
 actix-cors = "0.7"
 headless_chrome = "1.0.18"
-chrono = { version = "0.4", features = ["serde"] }
 uuid = { version = "1.10", features = ["v4", "serde"] }
 url = "2.5"
-regex = "1.10"
-
-[dev-dependencies]
-mockito = "1.5"
-reqwest = { version = "0.12", features = ["json"] }
 
 # Development profile - fast compilation
 [profile.dev]

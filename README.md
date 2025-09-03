@@ -1,5 +1,7 @@
 # Browser WebAPI
-A robust web API service for browser automation using headless Chrome. This project provides a REST API to control Chrome programmatically for tasks like screenshots, PDF generation, content extraction, and form automation.
+A robust web API service for browser automation using headless Chrome. 
+
+This project provides a REST API to control Chrome programmatically for tasks like screenshots, PDF generation, content extraction, and form automation.
 
 ## Features
 
@@ -12,16 +14,6 @@ A robust web API service for browser automation using headless Chrome. This proj
 - **Configurable** — Environment-based configuration  
 - **API Documentation** — Interactive Swagger / OpenAPI interface
 
-## Tech stack
-
-- Rust — Fast, safe, concurrent language  
-- Functional programming — F#-inspired pure functions and immutability  
-- Actix Web — High-performance web framework  
-- Headless Chrome — Automation via Chrome DevTools Protocol  
-- Tokio — Async runtime  
-- Serde — Serialization / deserialization  
-- Tracing — Structured logging  
-- Docker — Consistent deployment
 
 ## Functional programming approach
 
@@ -33,19 +25,35 @@ This project adopts a functional style inspired by F#, emphasizing:
 4. Pattern matching for clear, safe branching  
 5. Error handling using Result types
 
-# Browser WebAPI — API reference
+## Quick Start with Docker Compose
 
-This README provides a short, accurate API summary. For full request/response examples and ready-to-run requests, import the included `postman_collection.json` into Postman.
+For fast testing use Docker Compose to run the application locally:
 
-Postman collection
+1. **Ensure Docker and Docker Compose are installed** on your system.
+
+2. **Run the service**:
+   ```bash
+   docker-compose -f .docker/docker-compose.dev.yml up -d --build
+   ```
+5. **Stop the service**:
+   ```bash
+   docker-compose -f .docker/docker-compose.dev.yml down
+   ```
+
+## API reference
+
+For full request/response examples and ready-to-run requests, import the included `postman_collection.json` into Postman.
+
+**Postman collection**
 
 You can find the Postman collection in the repository root: [postman_collection.json](./postman_collection.json).
 Import it into Postman (File → Import or drag-and-drop).
-Use the collection variables:
+
+**Set the collection variables:**
 - `base_url` as `http://localhost:8080`
 - `tab_id` should be set after opening a new tab using the result from the `/api/v1/tab/open` endpoint.
 
-Implemented routes (summary)
+### Implemented routes
 
 | Method | Endpoint | Description |
 |---|---|---|
@@ -58,3 +66,7 @@ Implemented routes (summary)
 | **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
 | **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content or attribute value from an element |
 | **POST** | `/api/v1/tabs/{id}/element/execute` | Execute JavaScript on an element |
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
