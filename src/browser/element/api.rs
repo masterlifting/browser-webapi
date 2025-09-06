@@ -67,42 +67,25 @@ pub fn exists(tab_id: &str, dto: ExistsDto) -> bool {
     .is_some()
 }
 
-/// Extracts content or attribute from the element with the given selector in the tab.
+/// Extracts content from the element with the given selector in the tab.
+/// Returns the inner text of the element.
+/// If the element has no text content, an empty string is returned.
 ///
 /// # Errors
 ///
 /// Returns an `Error` if:
 /// * The tab is not found
 /// * The element is not found
-/// * Getting the attribute or content fails
-/// * The attribute is not present (when specified)
+/// * Getting the content fails
 pub fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   tab::api::find(tab_id).and_then(|tab| {
-    find(&tab, &dto.selector).and_then(|element| match dto.attribute {
-      Some(ref attr_name) => element
-        .get_attribute_value(attr_name)
-        .map_err(|e| {
-          Error::Operation(ErrorInfo {
-            message: format!(
-              "Failed to get attribute '{}' of element '{}': {}",
-              attr_name, dto.selector, e
-            ),
-            code: None,
-          })
-        })
-        .and_then(|opt| match opt {
-          Some(value) => Ok(value),
-          None => Err(Error::NotFound(format!(
-            "Attribute '{}' not found on element '{}'",
-            attr_name, dto.selector
-          ))),
-        }),
-      None => element.get_inner_text().map_err(|e| {
+    find(&tab, &dto.selector).and_then(|element| {
+      element.get_inner_text().map_err(|e| {
         Error::Operation(ErrorInfo {
           message: format!("Failed to get content of element '{}': {}", dto.selector, e),
           code: None,
         })
-      }),
+      })
     })
   })
 }

@@ -120,7 +120,7 @@
 										"extract"
 									]
 								},
-								"description": "Extract text content or attribute value from an element on the tab by selector. If attribute is provided, returns the attribute value; otherwise, returns the inner text."
+								"description": "Extract text content from an element on the tab by selector. Returns the inner text of the element, or an empty string if the element has no text content."
 							},
 							"response": []
 						},

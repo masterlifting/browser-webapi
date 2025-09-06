@@ -60,7 +60,7 @@ Import it into Postman (File → Import or drag-and-drop).
 | **POST** | `/api/v1/tabs/{id}/humanize` | Apply human-like behaviors to avoid detection |
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
 | **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
-| **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content or attribute value from an element |
+| **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content from an element |
 | **POST** | `/api/v1/tabs/{id}/element/execute` | Execute JavaScript on an element |
 
 ## License

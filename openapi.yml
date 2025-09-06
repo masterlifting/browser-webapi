@@ -219,8 +219,8 @@ paths:
 
   /api/v1/tabs/{id}/element/extract:
     post:
-      summary: Extract data from element
-      description: Extracts data from an element in the specified tab
+      summary: Extract text content from element
+      description: Extracts text content from an element in the specified tab. Returns an empty string if the element has no text content.
       parameters:
         - name: id
           in: path
@@ -236,11 +236,12 @@ paths:
               $ref: '#/components/schemas/ExtractDto'
       responses:
         '200':
-          description: Element data extracted successfully
+          description: Element text content extracted successfully
           content:
             text/plain:
               schema:
                 type: string
+                example: "Extracted text content"
         '400':
           description: Bad request
           content:
@@ -248,7 +249,7 @@ paths:
               schema:
                 type: string
         '404':
-          description: Tab not found
+          description: Tab or element not found
           content:
             text/plain:
               schema:
@@ -352,12 +353,8 @@ components:
       properties:
         selector:
           type: string
-          description: CSS selector for the element to extract data from
+          description: CSS selector for the element to extract text content from
           example: "#result"
-        attribute:
-          type: string
-          description: Optional attribute to extract (if not specified, extracts text content)
-          example: "href"
 
     ExecuteDto:
       type: object

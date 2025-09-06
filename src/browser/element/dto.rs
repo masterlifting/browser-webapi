@@ -13,7 +13,6 @@ pub struct ExistsDto {
 #[derive(Deserialize)]
 pub struct ExtractDto {
   pub selector: String,
-  pub attribute: Option<String>,
 }
 
 #[derive(Deserialize)]
