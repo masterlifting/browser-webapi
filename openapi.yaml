@@ -1,0 +1,375 @@
+openapi: 3.0.3
+info:
+  title: Browser WebAPI
+  description: A web API for browser automation using headless Chrome
+  version: 1.0.0
+  contact:
+    name: Andrei Pestunov
+    email: masterlifting@gmail.com
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /api/v1/health:
+    get:
+      summary: Health check
+      description: Returns the health status of the API
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "1.0.0"
+
+  /api/v1/tab/open:
+    post:
+      summary: Open a new browser tab
+      description: Opens a new browser tab with the specified URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OpenDto'
+      responses:
+        '200':
+          description: Tab opened successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Tab ID
+                example: "tab-123"
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/close:
+    delete:
+      summary: Close a browser tab
+      description: Closes the specified browser tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      responses:
+        '200':
+          description: Tab closed successfully
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/fill:
+    post:
+      summary: Fill form inputs
+      description: Fills form inputs in the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FillDto'
+      responses:
+        '200':
+          description: Form filled successfully
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/humanize:
+    post:
+      summary: Humanize tab
+      description: Applies human-like behavior to the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      responses:
+        '200':
+          description: Tab humanized successfully
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/element/click:
+    post:
+      summary: Click an element
+      description: Clicks an element in the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClickDto'
+      responses:
+        '200':
+          description: Element clicked successfully
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/element/exists:
+    post:
+      summary: Check if element exists
+      description: Checks if an element exists in the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExistsDto'
+      responses:
+        '200':
+          description: Element existence check result
+          content:
+            text/plain:
+              schema:
+                type: string
+                example: "true"
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/element/extract:
+    post:
+      summary: Extract data from element
+      description: Extracts data from an element in the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExtractDto'
+      responses:
+        '200':
+          description: Element data extracted successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+  /api/v1/tabs/{id}/element/execute:
+    post:
+      summary: Execute JavaScript on element
+      description: Executes JavaScript code on an element in the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExecuteDto'
+      responses:
+        '200':
+          description: JavaScript executed successfully
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
+components:
+  schemas:
+    OpenDto:
+      type: object
+      required:
+        - url
+      properties:
+        url:
+          type: string
+          description: URL to open in the new tab
+          example: "https://example.com"
+
+    FillDto:
+      type: object
+      required:
+        - inputs
+      properties:
+        inputs:
+          type: array
+          items:
+            $ref: '#/components/schemas/InputDto'
+          description: List of form inputs to fill
+
+    InputDto:
+      type: object
+      required:
+        - selector
+        - value
+      properties:
+        selector:
+          type: string
+          description: CSS selector for the input element
+          example: "#username"
+        value:
+          type: string
+          description: Value to fill in the input
+          example: "john_doe"
+
+    ClickDto:
+      type: object
+      required:
+        - selector
+      properties:
+        selector:
+          type: string
+          description: CSS selector for the element to click
+          example: "#submit-button"
+
+    ExistsDto:
+      type: object
+      required:
+        - selector
+      properties:
+        selector:
+          type: string
+          description: CSS selector for the element to check
+          example: "#username"
+
+    ExtractDto:
+      type: object
+      required:
+        - selector
+      properties:
+        selector:
+          type: string
+          description: CSS selector for the element to extract data from
+          example: "#result"
+        attribute:
+          type: string
+          description: Optional attribute to extract (if not specified, extracts text content)
+          example: "href"
+
+    ExecuteDto:
+      type: object
+      required:
+        - selector
+        - function
+      properties:
+        selector:
+          type: string
+          description: CSS selector for the element to execute JavaScript on
+          example: "#my-element"
+        function:
+          type: string
+          description: JavaSc0ript function to execute on the element
+          example: "submit();"
