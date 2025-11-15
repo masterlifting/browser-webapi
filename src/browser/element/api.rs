@@ -1,4 +1,4 @@
-use headless_chrome::{Element, protocol::cdp::Runtime::RemoteObject};
+use headless_chrome::Element;
 use std::sync::Arc;
 
 use crate::browser::element::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto};
@@ -90,19 +90,6 @@ pub fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   })
 }
 
-/// Processes the result of a JavaScript evaluation into a string representation.
-fn process_js_result(res: RemoteObject) -> String {
-  res
-    .value
-    .map(|val| {
-      val
-        .as_str()
-        .map(|s| s.to_string())
-        .unwrap_or_else(|| val.to_string())
-    })
-    .unwrap_or_else(|| "unit".to_string())
-}
-
 /// Executes JavaScript code on the element with the given selector in the tab,
 /// or on the tab itself if no selector is provided, and returns the string representation of the result.
 ///
@@ -136,5 +123,15 @@ pub fn execute(tab_id: &str, dto: ExecuteDto) -> Result<String, Error> {
         })
       }),
     })
-    .map(process_js_result)
+    .map(|res| {
+      res
+        .value
+        .map(|val| {
+          val
+            .as_str()
+            .map(|s| s.to_string())
+            .unwrap_or_else(|| val.to_string())
+        })
+        .unwrap_or_else(|| "unit".to_string())
+    })
 }
