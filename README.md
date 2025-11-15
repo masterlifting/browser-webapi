@@ -53,7 +53,7 @@ Import it into Postman (File → Import or drag-and-drop).
 
 | Method | Endpoint | Description |
 |---|---|---|
-| **GET** | `/api/v1/health` | Health / status |
+| **GET** | `/health` | Health / status |
 | **POST** | `/api/v1/tab/open` | Open a new browser tab |
 | **DELETE** | `/api/v1/tabs/{id}/close` | Close a tab |
 | **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
@@ -61,7 +61,7 @@ Import it into Postman (File → Import or drag-and-drop).
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
 | **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
 | **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content from an element |
-| **POST** | `/api/v1/tabs/{id}/element/execute` | Execute JavaScript on an element |
+| **POST** | `/api/v1/tabs/{id}/element/execute` | Execute JavaScript on an element or tab |
 
 ## License
 

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Browser WebAPI
   description: A web API for browser automation using headless Chrome
-  version: 1.0.1
+  version: 2.0.0
   contact:
     name: Andrei Pestunov
     email: masterlifting@gmail.com
@@ -14,7 +14,7 @@ servers:
     description: Local development server
 
 paths:
-  /api/v1/health:
+  /health:
     get:
       summary: Health check
       description: Returns the health status of the API
@@ -31,7 +31,7 @@ paths:
                     example: "ok"
                   version:
                     type: string
-                    example: "1.0.1"
+                    example: "2.0.0"
 
   /api/v1/tab/open:
     post:
@@ -257,8 +257,8 @@ paths:
 
   /api/v1/tabs/{id}/element/execute:
     post:
-      summary: Execute JavaScript on element
-      description: Executes JavaScript code on an element in the specified tab
+      summary: Execute JavaScript on element or tab
+      description: Executes JavaScript code on an element in the specified tab (if selector provided using `.this`) or on the tab itself (if no selector)
       parameters:
         - name: id
           in: path
@@ -275,6 +275,12 @@ paths:
       responses:
         '200':
           description: JavaScript executed successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Result of the JavaScript execution
+                example: "unit"
         '400':
           description: Bad request
           content:
@@ -359,14 +365,13 @@ components:
     ExecuteDto:
       type: object
       required:
-        - selector
         - function
       properties:
         selector:
           type: string
-          description: CSS selector for the element to execute JavaScript on
+          description: CSS selector for the element to execute JavaScript on (optional). If not provided, JavaScript is executed on the tab.
           example: "#my-element"
         function:
           type: string
-          description: JavaSc0ript function to execute on the element
-          example: "submit();"
+          description: JavaScript code to execute
+          example: "scrollTo(0, 500);"

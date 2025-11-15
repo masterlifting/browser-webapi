@@ -27,18 +27,18 @@ fn map_unit_to_response(res: Result<(), Error>) -> HttpResponse {
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
   cfg
+    .route(
+      "/health",
+      web::get().to(|| async {
+        HttpResponse::Ok().json(json!({
+            "status": "ok",
+            "version": std::env::var("VERSION")
+                .unwrap_or_else(|_| "unknown".to_string()),
+        }))
+      }),
+    )
     .service(
       web::scope("/api/v1")
-        .route(
-          "/health",
-          web::get().to(|| async {
-            HttpResponse::Ok().json(json!({
-                "status": "ok",
-                "version": std::env::var("VERSION")
-                    .unwrap_or_else(|_| "unknown".to_string()),
-            }))
-          }),
-        )
         .service(web::scope("/tab").route(
           "/open",
           web::post().to(
@@ -100,7 +100,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                   "/execute",
                   web::post().to(
                     |req: web::Json<ExecuteDto>, id: web::Path<String>| async move {
-                      map_unit_to_response(element::api::execute(&id, req.into_inner()))
+                      map_string_to_response(element::api::execute(&id, req.into_inner()))
                     },
                   ),
                 ),

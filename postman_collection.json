@@ -157,7 +157,7 @@
 										"execute"
 									]
 								},
-								"description": "Execute JavaScript on an element by selector. The JavaScript is executed in the context of the element."
+								"description": "Execute JavaScript on an element by selector (optional), or on the tab if no selector provided. Returns the result of the JavaScript execution as a string."
 							},
 							"response": []
 						}
@@ -286,13 +286,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "{{base_url}}/api/v1/health",
+					"raw": "{{base_url}}/health",
 					"host": [
 						"{{base_url}}"
 					],
 					"path": [
-						"api",
-						"v1",
 						"health"
 					]
 				},

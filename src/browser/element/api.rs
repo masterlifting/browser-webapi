@@ -1,4 +1,4 @@
-use headless_chrome::Element;
+use headless_chrome::{Element, protocol::cdp::Runtime::RemoteObject};
 use std::sync::Arc;
 
 use crate::browser::element::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto};
@@ -90,30 +90,51 @@ pub fn extract(tab_id: &str, dto: ExtractDto) -> Result<String, Error> {
   })
 }
 
-/// Executes a JavaScript function on the element with the given selector in the tab.
+/// Processes the result of a JavaScript evaluation into a string representation.
+fn process_js_result(res: RemoteObject) -> String {
+  res
+    .value
+    .map(|val| {
+      val
+        .as_str()
+        .map(|s| s.to_string())
+        .unwrap_or_else(|| val.to_string())
+    })
+    .unwrap_or_else(|| "unit".to_string())
+}
+
+/// Executes JavaScript code on the element with the given selector in the tab,
+/// or on the tab itself if no selector is provided, and returns the string representation of the result.
 ///
 /// # Errors
 ///
 /// Returns an `Error` if:
 /// * The tab is not found
-/// * The element is not found
+/// * The element is not found (if selector is provided)
 /// * Evaluating the JavaScript fails
-pub fn execute(tab_id: &str, dto: ExecuteDto) -> Result<(), Error> {
-  tab::api::find(tab_id).and_then(|tab| {
-    find(&tab, &dto.selector).and_then(|element| {
-      element
-        .call_js_fn(
-          &format!("function() {{ this.{} }}", dto.function),
-          vec![],
-          true,
-        )
-        .map(|_| ())
-        .map_err(|e| {
-          Error::Operation(ErrorInfo {
-            message: format!("Failed to evaluate JS on element '{}': {}", dto.selector, e),
-            code: None,
+pub fn execute(tab_id: &str, dto: ExecuteDto) -> Result<String, Error> {
+  tab::api::find(tab_id)
+    .and_then(|tab| match &dto.selector {
+      Some(selector) => find(&tab, selector).and_then(|element| {
+        element
+          .call_js_fn(
+            "function() { return eval(arguments[0]); }",
+            vec![serde_json::Value::String(dto.function.to_string())],
+            true,
+          )
+          .map_err(|e| {
+            Error::Operation(ErrorInfo {
+              message: format!("Failed to evaluate JS on element '{}': {}", selector, e),
+              code: None,
+            })
           })
+      }),
+      None => tab.evaluate(&dto.function, true).map_err(|e| {
+        Error::Operation(ErrorInfo {
+          message: format!("Failed to evaluate JS on tab: {}", e),
+          code: None,
         })
+      }),
     })
-  })
+    .map(process_js_result)
 }

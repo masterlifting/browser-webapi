@@ -17,6 +17,6 @@ pub struct ExtractDto {
 
 #[derive(Deserialize)]
 pub struct ExecuteDto {
-  pub selector: String,
+  pub selector: Option<String>,
   pub function: String,
 }
