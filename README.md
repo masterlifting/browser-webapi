@@ -54,7 +54,7 @@ Import it into Postman (File → Import or drag-and-drop).
 | Method | Endpoint | Description |
 |---|---|---|
 | **GET** | `/health` | Health / status |
-| **POST** | `/api/v1/tab/open` | Open a new browser tab |
+| **POST** | `/api/v1/tab/open` | Open a new browser tab (optional `expiration_seconds`, default 30) |
 | **DELETE** | `/api/v1/tabs/{id}/close` | Close a tab |
 | **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
 | **POST** | `/api/v1/tabs/{id}/humanize` | Apply human-like behaviors to avoid detection |

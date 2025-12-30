@@ -175,7 +175,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"url\": \"https://www.google.com\"\n}",
+						"raw": "{\n  \"url\": \"https://www.google.com\",\n  \"expiration_seconds\": 30\n}",
 							"options": {
 								"raw": {
 									"language": "json"
@@ -194,7 +194,7 @@
 								"open"
 							]
 						},
-						"description": "Open a new tab; returns tab id as raw body"
+						"description": "Open a new tab; returns tab id as raw body. Optional expiration_seconds (default 30) auto-closes the tab."
 					},
 					"response": []
 				},
