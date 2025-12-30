@@ -3,7 +3,12 @@ use serde::Deserialize;
 #[derive(Deserialize)]
 pub struct OpenDto {
   pub url: String,
-  //TODO: add expiration
+  #[serde(default = "default_expiration_seconds")]
+  pub expiration_seconds: u64,
+}
+
+fn default_expiration_seconds() -> u64 {
+  30
 }
 
 #[derive(Deserialize)]

@@ -3,6 +3,8 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::LazyLock;
 use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
 use url::Url;
 use uuid::Uuid;
 
@@ -56,6 +58,16 @@ pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
 ///
 /// Panics if the internal mutex is poisoned.
 pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
+  fn schedule_auto_close(tab_id: String, expiration_seconds: u64) {
+    thread::spawn(move || {
+      thread::sleep(Duration::from_secs(expiration_seconds));
+      if let Some(tab) = try_find(&tab_id) {
+        let _ = tab.close(true);
+        TABS.lock().unwrap().remove(&tab_id);
+      }
+    });
+  }
+
   fn parse_url(url: &str) -> Result<Url, Error> {
     Url::parse(url).map_err(|e| {
       Error::Operation(ErrorInfo {
@@ -104,7 +116,11 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     .and_then(|url| open_new_tab(url, browser))
     .and_then(navigate_to_url)
     .and_then(wait_for_navigation)
-    .map(store_tab)
+    .map(|tab| {
+      let tab_id = store_tab(tab);
+      schedule_auto_close(tab_id.clone(), dto.expiration_seconds);
+      tab_id
+    })
 }
 
 /// Closes the tab with the specified ID.
