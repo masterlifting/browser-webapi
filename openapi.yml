@@ -305,7 +305,7 @@ components:
           type: string
           description: URL to open in the new tab
           example: "https://example.com"
-        expiration_seconds:
+        expiration:
           type: integer
           format: int64
           description: Auto-close the tab after this many seconds

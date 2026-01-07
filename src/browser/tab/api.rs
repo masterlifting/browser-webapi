@@ -58,9 +58,9 @@ pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
 ///
 /// Panics if the internal mutex is poisoned.
 pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
-  fn schedule_auto_close(tab_id: String, expiration_seconds: u64) {
+  fn schedule_auto_close(tab_id: String, expiration: u64) {
     thread::spawn(move || {
-      thread::sleep(Duration::from_secs(expiration_seconds));
+      thread::sleep(Duration::from_secs(expiration));
       if let Some(tab) = try_find(&tab_id) {
         let _ = tab.close(true);
         TABS.lock().unwrap().remove(&tab_id);
@@ -118,7 +118,7 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     .and_then(wait_for_navigation)
     .map(|tab| {
       let tab_id = store_tab(tab);
-      schedule_auto_close(tab_id.clone(), dto.expiration_seconds);
+      schedule_auto_close(tab_id.clone(), dto.expiration);
       tab_id
     })
 }
@@ -136,12 +136,15 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
 /// Panics if the internal mutex is poisoned.
 pub fn close(tab_id: &str) -> Result<(), Error> {
   fn close_tab(tab: Arc<Tab>) -> Result<(), Error> {
-    tab.close(true).map(|_| ()).map_err(|e| {
-      Error::Operation(ErrorInfo {
-        message: format!("Failed to close tab: {e}"),
-        code: None,
+    tab
+      .close(true)
+      .map(|_| tracing::info!("Tab closed successfully"))
+      .map_err(|e| {
+        Error::Operation(ErrorInfo {
+          message: format!("Failed to close tab: {e}"),
+          code: None,
+        })
       })
-    })
   }
 
   fn remove_tab(tab_id: &str) {
