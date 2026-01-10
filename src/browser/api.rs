@@ -49,9 +49,6 @@ pub fn launch(options: LaunchOptions) -> Result<Arc<Browser>, Error> {
     .and_then(|options| {
       Browser::new(options)
         .map(Arc::new)
-        .inspect(|_| {
-          tracing::info!("Browser launched successfully");
-        })
         .map_err(|e| Error::other(e.to_string()))
     })
 }

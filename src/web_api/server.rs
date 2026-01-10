@@ -1,7 +1,6 @@
-use actix_web::web;
+use actix_web::{middleware::Logger, web};
 use headless_chrome::Browser;
 use std::{env, sync::Arc};
-use tracing_actix_web::TracingLogger;
 
 /// Starts an HTTP server with the provided browser instance.
 ///
@@ -42,7 +41,7 @@ pub async fn run(browser: Arc<Browser>) -> std::io::Result<()> {
       .max_age(3600);
 
     actix_web::App::new()
-      .wrap(TracingLogger::default())
+      .wrap(Logger::new("%a \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %T").log_target("http"))
       .wrap(cors)
       .app_data(web::Data::new(browser.clone()))
       .configure(crate::web_api::routes::configure)

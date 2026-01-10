@@ -136,15 +136,12 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
 /// Panics if the internal mutex is poisoned.
 pub fn close(tab_id: &str) -> Result<(), Error> {
   fn close_tab(tab: Arc<Tab>) -> Result<(), Error> {
-    tab
-      .close(true)
-      .map(|_| tracing::info!("Tab closed successfully"))
-      .map_err(|e| {
-        Error::Operation(ErrorInfo {
-          message: format!("Failed to close tab: {e}"),
-          code: None,
-        })
+    tab.close(true).map(|_| ()).map_err(|e| {
+      Error::Operation(ErrorInfo {
+        message: format!("Failed to close tab: {e}"),
+        code: None,
       })
+    })
   }
 
   fn remove_tab(tab_id: &str) {
