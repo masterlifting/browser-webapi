@@ -54,4 +54,7 @@ debug/
 profile/
 
 # AI
+AGENTS.md
+.codex
+.serens
 .workflow
