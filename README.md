@@ -35,11 +35,11 @@ For fast testing use Docker Compose to run the application locally:
 
 2. **Run the service**:
    ```bash
-   docker-compose -f .docker/docker-compose.dev.yml up -d --build
+   docker-compose -f .docker/docker-compose.yml up -d --build
    ```
 3. **Stop the service**:
    ```bash
-   docker-compose -f .docker/docker-compose.dev.yml down
+   docker-compose -f .docker/docker-compose.yml down
    ```
 
 ## API reference

@@ -1,7 +1,7 @@
 services:
   browser-webapi:
     container_name: browser-webapi
-    image: browser-webapi:latest
+    image: browser-webapi
     build:
       context: ..
       dockerfile: .docker/Dockerfile
