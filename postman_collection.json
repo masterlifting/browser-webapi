@@ -45,9 +45,9 @@
 										"element",
 										"click"
 									]
-								},
-								"description": "Click an element on the tab by selector. Returns a short string on success."
-							},
+						},
+						"description": "Click an element on the tab by selector. Returns the page title after click."
+					},
 							"response": []
 						},
 						{
@@ -253,6 +253,33 @@
 							]
 						},
 						"description": "Fill multiple input elements on the tab. Provide tab id as path variable 'id'."
+					},
+					"response": []
+				},
+				{
+					"name": "screenshot",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "image/png"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/screenshot",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"tabs",
+								"{{tab_id}}",
+								"screenshot"
+							]
+						},
+						"description": "Get a PNG screenshot of the tab. Returns raw image bytes."
 					},
 					"response": []
 				},

@@ -3,6 +3,8 @@ A robust web API service for browser automation using headless Chrome.
 
 This project provides a REST API to control Chrome programmatically for tasks like screenshots, PDF generation, content extraction, and form automation.
 
+Version: `3.0.0`
+
 ## Features
 
 - **Comprehensive REST API** — Full control over browser capabilities  
@@ -12,7 +14,7 @@ This project provides a REST API to control Chrome programmatically for tasks li
 - **Modular Architecture** — Well-organized codebase following Rust best practices  
 - **Container Ready** — Docker support for easy deployment  
 - **Configurable** — Environment-based configuration  
-- **API Documentation** — Interactive Swagger / OpenAPI interface
+- **API Documentation** — OpenAPI spec (`openapi.yml`) and Postman collection (`postman_collection.json`)
 
 
 ## Functional programming approach
@@ -35,14 +37,20 @@ For fast testing use Docker Compose to run the application locally:
    ```bash
    docker-compose -f .docker/docker-compose.dev.yml up -d --build
    ```
-5. **Stop the service**:
+3. **Stop the service**:
    ```bash
    docker-compose -f .docker/docker-compose.dev.yml down
    ```
 
 ## API reference
 
-For full request/response examples and ready-to-run requests, import the included `postman_collection.json` into Postman.
+The API contract lives in `openapi.yml`.
+
+For full request/response examples and ready-to-run requests, import `postman_collection.json` into Postman.
+
+**OpenAPI spec**
+
+`openapi.yml` is the authoritative schema for routes, payloads, and response types.
 
 **Postman collection**
 
@@ -57,6 +65,7 @@ Import it into Postman (File → Import or drag-and-drop).
 | **POST** | `/api/v1/tab/open` | Open a new browser tab (optional `expiration`, default 30 seconds) |
 | **DELETE** | `/api/v1/tabs/{id}/close` | Close a tab |
 | **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
+| **GET** | `/api/v1/tabs/{id}/screenshot` | Get a PNG screenshot for a tab |
 | **POST** | `/api/v1/tabs/{id}/humanize` | Apply human-like behaviors to avoid detection |
 | **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
 | **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |

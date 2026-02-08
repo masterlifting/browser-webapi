@@ -1,16 +1,18 @@
 services:
   browser-webapi:
     container_name: browser-webapi
-    image: ponkorn/browser-webapi:dev
+    image: browser-webapi:dev
     build:
       context: ..
       dockerfile: .docker/Dockerfile
     ports:
-      - 8080:8080
+      - 3001:3001
     environment:
       - SERVER_HOST=0.0.0.0
-      - SERVER_PORT=8080
-      - USE_UI=false
-      - BINARY_DATA_DIR=/usr/bin/chromium-browser
-      - USER_DATA_DIR=/tmp/chrome_temp
-      - IDLE_TIMEOUT_DAYS=7
+      - SERVER_PORT=3001
+      - USER_DATA_DIR=/app/chrome-profile
+    volumes:
+      - chrome-data:/app/chrome-profile
+
+volumes:
+  chrome-data:

@@ -52,3 +52,6 @@ debug/
 
 # Profiling files
 profile/
+
+# AI
+.workflow

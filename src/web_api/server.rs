@@ -1,5 +1,6 @@
 use actix_web::{middleware::Logger, web};
-use headless_chrome::Browser;
+use chaser_oxide::{Browser, Handler};
+use futures::StreamExt;
 use std::{env, sync::Arc};
 
 /// Starts an HTTP server with the provided browser instance.
@@ -14,6 +15,7 @@ use std::{env, sync::Arc};
 ///
 /// * `browser` - A thread-safe reference to a headless Chrome browser instance
 ///   that will be shared with request handlers.
+/// * `handler` - Browser handler that must be kept alive for the browser to function
 ///
 /// # Returns
 ///
@@ -24,9 +26,13 @@ use std::{env, sync::Arc};
 /// This function will return an error if:
 /// * The server fails to bind to the specified host:port combination
 /// * The underlying Actix server encounters an error during operation
-pub async fn run(browser: Arc<Browser>) -> std::io::Result<()> {
+pub async fn run(browser: Arc<Browser>, mut handler: Handler) -> std::io::Result<()> {
   let host = env::var("SERVER_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
   let port = env::var("SERVER_PORT").unwrap_or_else(|_| "8080".to_string());
+
+  // Spawn handler event loop as shown in chaser-oxide documentation
+  tokio::spawn(async move { while (handler.next().await).is_some() {} });
+
   tracing::info!("Starting server at http://{}:{}", host, port);
 
   actix_web::HttpServer::new(move || {

@@ -1,10 +1,14 @@
-use headless_chrome::{Browser, Tab};
+use chaser_oxide::cdp::browser_protocol::network::{Cookie, DeleteCookiesParams};
+use chaser_oxide::page::ScreenshotParams;
+use chaser_oxide::{Browser, ChaserPage, ChaserProfile};
+use futures::TryFutureExt;
+use futures::future;
+use futures::stream::{self, TryStreamExt};
 use std::collections::HashMap;
 use std::sync::Arc;
 use std::sync::LazyLock;
-use std::sync::Mutex;
-use std::thread;
-use std::time::Duration;
+use tokio::sync::Mutex;
+use tokio::time::Duration;
 use url::Url;
 use uuid::Uuid;
 
@@ -12,22 +16,28 @@ use crate::browser::element;
 use crate::browser::tab::dto::{FillDto, OpenDto};
 use crate::models::{Error, ErrorInfo};
 
-static TABS: LazyLock<Mutex<HashMap<String, Arc<Tab>>>> =
+static TABS: LazyLock<Mutex<HashMap<String, Arc<ChaserPage>>>> =
   LazyLock::new(|| Mutex::new(HashMap::new()));
 
 /// Finds a tab by its ID.
+///
+/// # Arguments
+///
+/// - `tab_id`: The ID of the tab to look up.
 ///
 /// # Errors
 ///
 /// Returns `Error::NotFound` if the tab with the given ID does not exist.
 ///
-/// # Panics
+/// # Examples
 ///
-/// Panics if the internal mutex is poisoned.
-pub fn find(tab_id: &str) -> Result<Arc<Tab>, Error> {
+/// ```ignore
+/// let page = api::find(tab_id).await?;
+/// ```
+pub async fn find(tab_id: &str) -> Result<Arc<ChaserPage>, Error> {
   TABS
     .lock()
-    .unwrap()
+    .await
     .get(tab_id)
     .cloned()
     .ok_or_else(|| Error::NotFound(format!("tab_id {tab_id}")))
@@ -35,35 +45,55 @@ pub fn find(tab_id: &str) -> Result<Arc<Tab>, Error> {
 
 /// Attempts to find a tab by its ID without panicking on not found.
 ///
-/// # Panics
+/// # Arguments
 ///
-/// Panics if the internal mutex is poisoned.
+/// - `tab_id`: The ID of the tab to look up.
+///
+/// # Examples
+///
+/// ```ignore
+/// if let Some(page) = api::try_find(tab_id).await {
+///   // use page
+/// }
+/// ```
 #[must_use]
-pub fn try_find(tab_id: &str) -> Option<Arc<Tab>> {
-  TABS.lock().unwrap().get(tab_id).cloned()
+pub async fn try_find(tab_id: &str) -> Option<Arc<ChaserPage>> {
+  TABS.lock().await.get(tab_id).cloned()
 }
 
 /// Opens a new tab with the specified URL and applies anti-detection measures.
 ///
+/// # Behavior
+///
+/// - Creates a new page and wraps it in `ChaserPage`.
+/// - Applies the Windows stealth profile before navigation.
+/// - Navigates to the requested URL.
+/// - Schedules automatic tab closure after `dto.expiration` seconds.
+///
+/// # Arguments
+///
+/// - `browser`: The shared browser instance.
+/// - `dto`: Open payload including the URL and expiration.
+///
 /// # Errors
 ///
 /// Returns an `Error` if:
-/// * The URL is invalid
-/// * Creating a new tab fails
-/// * JavaScript evaluation fails
-/// * Navigation to the URL fails
-/// * Waiting for navigation fails
+/// - The URL is invalid.
+/// - Creating a new tab fails.
+/// - Applying the stealth profile fails.
+/// - Navigation to the URL fails.
 ///
-/// # Panics
+/// # Examples
 ///
-/// Panics if the internal mutex is poisoned.
-pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
+/// ```ignore
+/// let tab_id = api::open(browser, OpenDto { url: "https://example.com".into(), expiration: 60 }).await?;
+/// ```
+pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
   fn schedule_auto_close(tab_id: String, expiration: u64) {
-    thread::spawn(move || {
-      thread::sleep(Duration::from_secs(expiration));
-      if let Some(tab) = try_find(&tab_id) {
-        let _ = tab.close(true);
-        TABS.lock().unwrap().remove(&tab_id);
+    tokio::spawn(async move {
+      tokio::time::sleep(Duration::from_secs(expiration)).await;
+      if close(&tab_id).await.is_ok() {
+        tracing::info!("Tab {tab_id} expired after {expiration} seconds");
       }
     });
   }
@@ -77,66 +107,142 @@ pub fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> {
     })
   }
 
-  fn open_new_tab(url: Url, browser: Arc<Browser>) -> Result<(Arc<Tab>, Url), Error> {
-    browser.new_tab().map(|tab| (tab, url)).map_err(|e| {
-      Error::Operation(ErrorInfo {
-        message: format!("Failed to create new tab: {e}"),
-        code: None,
+  async fn create_new_tab(url: Url, browser: Arc<Browser>) -> Result<(ChaserPage, Url), Error> {
+    browser
+      .new_page("about:blank")
+      .map_err(|e| {
+        Error::Operation(ErrorInfo {
+          message: format!("Failed to create new page: {e}"),
+          code: None,
+        })
       })
-    })
+      .and_then(move |page| async move {
+        let chaser = ChaserPage::new(page);
+        let profile = ChaserProfile::linux().build();
+
+        chaser.apply_profile(&profile).await.map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: format!("Failed to apply stealth profile: {e}"),
+            code: None,
+          })
+        })?;
+
+        Ok((chaser, url))
+      })
+      .await
   }
 
-  fn navigate_to_url((tab, url): (Arc<Tab>, Url)) -> Result<Arc<Tab>, Error> {
-    match tab.navigate_to(url.as_str()) {
-      Ok(_) => Ok(tab),
-      Err(e) => Err(Error::Operation(ErrorInfo {
+  async fn navigate_to_url((chaser, url): (ChaserPage, Url)) -> Result<ChaserPage, Error> {
+    chaser.goto(url.as_str()).await.map_err(|e| {
+      Error::Operation(ErrorInfo {
         message: format!("Failed to navigate to URL: {e}"),
         code: None,
-      })),
-    }
+      })
+    })?;
+
+    Ok(chaser)
   }
 
-  fn wait_for_navigation(tab: Arc<Tab>) -> Result<Arc<Tab>, Error> {
-    match tab.wait_until_navigated() {
-      Ok(_) => Ok(tab),
-      Err(e) => Err(Error::Operation(ErrorInfo {
-        message: format!("Failed to wait for navigation: {e}"),
-        code: None,
-      })),
-    }
-  }
-
-  fn store_tab(tab: Arc<Tab>) -> String {
+  async fn store_tab(page: ChaserPage) -> Result<String, Error> {
     let tab_id = Uuid::new_v4().to_string();
-    TABS.lock().unwrap().insert(tab_id.clone(), tab);
-    tab_id
+    let mut tabs = TABS.lock().await;
+    tabs.insert(tab_id.clone(), Arc::new(page));
+    Ok(tab_id)
   }
 
-  parse_url(&dto.url)
-    .and_then(|url| open_new_tab(url, browser))
+  future::ready(parse_url(&dto.url))
+    .and_then(move |url| create_new_tab(url, browser))
     .and_then(navigate_to_url)
-    .and_then(wait_for_navigation)
-    .map(|tab| {
-      let tab_id = store_tab(tab);
+    .and_then(store_tab)
+    .map_ok(|tab_id| {
       schedule_auto_close(tab_id.clone(), dto.expiration);
       tab_id
     })
+    .await
 }
 
 /// Closes the tab with the specified ID.
 ///
+/// # Behavior
+///
+/// - Removes the tab from the in-memory store.
+/// - Clears cookies for the tab's current URL.
+/// - Closes the underlying page.
+///
+/// # Arguments
+///
+/// - `tab_id`: The ID of the tab to close.
+///
 /// # Errors
 ///
 /// Returns an `Error` if:
-/// * The tab with the given ID does not exist
-/// * Closing the tab fails
+/// - The tab with the given ID does not exist.
+/// - Reading or deleting cookies fails.
+/// - Closing the tab fails.
 ///
-/// # Panics
+/// # Examples
 ///
-/// Panics if the internal mutex is poisoned.
-pub fn close(tab_id: &str) -> Result<(), Error> {
-  fn close_tab(tab: Arc<Tab>) -> Result<(), Error> {
-    tab.close(true).map(|_| ()).map_err(|e| {
+/// ```ignore
+/// api::close(tab_id).await?;
+/// ```
+pub async fn close(tab_id: &str) -> Result<(), Error> {
+  async fn remove_tab(tab_id: &str) -> Result<(&str, Arc<ChaserPage>), Error> {
+    TABS
+      .lock()
+      .await
+      .remove(tab_id)
+      .map(|page| (tab_id, page))
+      .ok_or_else(|| Error::NotFound(format!("tab_id {tab_id}")))
+  }
+
+  async fn get_cookies(
+    (tab_id, chaser): (&str, Arc<ChaserPage>),
+  ) -> Result<(&str, Vec<Cookie>, Arc<ChaserPage>), Error> {
+    let cookies = chaser.raw_page().get_cookies().await.map_err(|e| {
+      Error::Operation(ErrorInfo {
+        message: format!("Failed to get cookies: {e}"),
+        code: None,
+      })
+    })?;
+
+    Ok((tab_id, cookies, chaser))
+  }
+
+  async fn clear_cookies(
+    (tab_id, cookies, chaser): (&str, Vec<Cookie>, Arc<ChaserPage>),
+  ) -> Result<Arc<ChaserPage>, Error> {
+    let to_delete = cookies
+      .iter()
+      .map(|cookie| {
+        DeleteCookiesParams::builder()
+          .name(cookie.name.clone())
+          .domain(cookie.domain.clone())
+          .path(cookie.path.clone())
+          .build()
+          .unwrap_or_else(|_| DeleteCookiesParams::new(cookie.name.clone()))
+      })
+      .collect::<Vec<_>>();
+
+    if !to_delete.is_empty() {
+      chaser
+        .raw_page()
+        .delete_cookies(to_delete.clone())
+        .await
+        .map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: format!("Failed to delete cookies: {e}"),
+            code: None,
+          })
+        })?;
+
+      tracing::info!("Deleted {} cookies for tab {}", to_delete.len(), tab_id);
+    }
+
+    Ok(chaser)
+  }
+
+  async fn close_page(chaser: Arc<ChaserPage>) -> Result<(), Error> {
+    chaser.raw_page().clone().close().await.map_err(|e| {
       Error::Operation(ErrorInfo {
         message: format!("Failed to close tab: {e}"),
         code: None,
@@ -144,55 +250,80 @@ pub fn close(tab_id: &str) -> Result<(), Error> {
     })
   }
 
-  fn remove_tab(tab_id: &str) {
-    TABS.lock().unwrap().remove(tab_id);
-  }
-
-  find(tab_id).and_then(close_tab).map(|_| remove_tab(tab_id))
+  remove_tab(tab_id)
+    .and_then(get_cookies)
+    .and_then(clear_cookies)
+    .and_then(close_page)
+    .await
 }
 
 /// Fills form inputs in the tab with the specified values.
 ///
+/// # Behavior
+///
+/// - Resolves the tab by ID.
+/// - Fills inputs sequentially (in request order).
+///
+/// # Arguments
+///
+/// - `tab_id`: The ID of the tab to operate on.
+/// - `dto`: Fill payload including selectors and values.
+///
 /// # Errors
 ///
 /// Returns an `Error` if:
-/// * The tab with the given ID does not exist
-/// * Finding an element fails
-/// * Filling an element fails
+/// - The tab with the given ID does not exist.
+/// - Finding an element fails.
+/// - Filling an element fails.
 ///
-/// # Panics
+/// # Examples
 ///
-/// Panics if the internal mutex is poisoned.
-pub fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
-  find(tab_id).and_then(|tab| {
-    dto.inputs.iter().try_for_each(|input| {
-      element::api::find(&tab, &input.selector).and_then(|element| {
-        element::api::fill(&element, &input.value).map_err(|e| {
-          Error::Operation(ErrorInfo {
-            message: e,
-            code: None,
-          })
+/// ```ignore
+/// api::fill(tab_id, FillDto { inputs: vec![/* ... */] }).await?;
+/// ```
+pub async fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
+  async fn fill_input(chaser: Arc<ChaserPage>, selector: String, value: String) -> Result<(), Error> {
+    element::api::fill(chaser, selector.as_str(), value.as_str()).await
+  }
+
+  find(tab_id)
+    .and_then(|chaser| async move {
+      stream::iter(dto.inputs.into_iter().map(Ok::<_, Error>))
+        .try_for_each(|input| {
+          let chaser = chaser.clone();
+          async move { fill_input(chaser, input.selector, input.value).await }
         })
-      })
+        .await
     })
-  })
+    .await
 }
 
 /// Applies human-like behaviors to the tab to avoid detection.
 ///
+/// # Behavior
+///
+/// - Resolves the tab by ID.
+/// - Runs a small script to resize, scroll, and dispatch mouse movement.
+///
+/// # Arguments
+///
+/// - `tab_id`: The ID of the tab to operate on.
+///
 /// # Errors
 ///
 /// Returns an `Error` if:
-/// * The tab with the given ID does not exist
-/// * JavaScript evaluation fails
+/// - The tab with the given ID does not exist.
+/// - JavaScript evaluation fails.
 ///
-/// # Panics
+/// # Examples
 ///
-/// Panics if the internal mutex is poisoned.
-pub fn humanize(tab_id: &str) -> Result<(), Error> {
+/// ```ignore
+/// api::humanize(tab_id).await?;
+/// ```
+pub async fn humanize(tab_id: &str) -> Result<(), Error> {
   find(tab_id)
-    .and_then(|tab| {
-      tab
+    .and_then(|page| async move {
+      page
         .evaluate(
           r"
             if (window.innerWidth > 800) {
@@ -203,9 +334,9 @@ pub fn humanize(tab_id: &str) -> Result<(), Error> {
             document.dispatchEvent(new MouseEvent('mousemove', { clientX: Math.random() * window.innerWidth, clientY: Math.random() * window.innerHeight }));
             true
           ",
-          true,
         )
-        .map(|_| tab.clone())
+        .await
+        .map(|_| ())
         .map_err(|e| {
           Error::Operation(ErrorInfo {
             message: format!("Failed to humanize tab: {e}"),
@@ -213,5 +344,44 @@ pub fn humanize(tab_id: &str) -> Result<(), Error> {
           })
         })
     })
-    .map(|_| ())
+    .await
+}
+
+/// Returns a PNG screenshot of the tab.
+///
+/// # Behavior
+///
+/// - Resolves the tab by ID.
+/// - Captures a PNG screenshot with default parameters.
+///
+/// # Arguments
+///
+/// - `tab_id`: The ID of the tab to capture.
+///
+/// # Errors
+///
+/// Returns an `Error` if:
+/// - The tab with the given ID does not exist.
+/// - Capturing the screenshot fails.
+///
+/// # Examples
+///
+/// ```ignore
+/// let png = api::screenshot(tab_id).await?;
+/// ```
+pub async fn screenshot(tab_id: &str) -> Result<Vec<u8>, Error> {
+  find(tab_id)
+    .and_then(|page| async move {
+      page
+        .raw_page()
+        .screenshot(ScreenshotParams::builder().build())
+        .await
+        .map_err(|e| {
+          Error::Operation(ErrorInfo {
+            message: format!("Failed to capture screenshot: {e}"),
+            code: None,
+          })
+        })
+    })
+    .await
 }

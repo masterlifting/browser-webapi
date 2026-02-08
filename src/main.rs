@@ -21,7 +21,9 @@ async fn main() -> std::io::Result<()> {
 
   let options = browser::models::LaunchOptions::from_env();
 
-  browser::api::launch(options)
-    .map(web_api::server::run)?
+  let (browser, handler) = browser::api::launch(options)
     .await
+    .map_err(|e| std::io::Error::other(e.to_string()))?;
+
+  web_api::server::run(browser, handler).await
 }

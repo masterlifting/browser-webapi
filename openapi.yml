@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Browser WebAPI
   description: A web API for browser automation using headless Chrome
-  version: 2.1.1
+  version: 3.0.0
   contact:
     name: Andrei Pestunov
     email: masterlifting@gmail.com
@@ -31,7 +31,7 @@ paths:
                     example: "ok"
                   version:
                     type: string
-                    example: "2.1.1"
+                    example: "3.0.0"
 
   /api/v1/tab/open:
     post:
@@ -146,10 +146,42 @@ paths:
               schema:
                 type: string
 
+  /api/v1/tabs/{id}/screenshot:
+    get:
+      summary: Get tab screenshot
+      description: Returns a PNG screenshot of the specified tab
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Tab ID
+      responses:
+        '200':
+          description: Screenshot captured successfully
+          content:
+            image/png:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Bad request
+          content:
+            text/plain:
+              schema:
+                type: string
+        '404':
+          description: Tab not found
+          content:
+            text/plain:
+              schema:
+                type: string
+
   /api/v1/tabs/{id}/element/click:
     post:
       summary: Click an element
-      description: Clicks an element in the specified tab
+      description: Clicks an element in the specified tab and returns the page title
       parameters:
         - name: id
           in: path
@@ -166,6 +198,11 @@ paths:
       responses:
         '200':
           description: Element clicked successfully
+          content:
+            text/plain:
+              schema:
+                type: string
+                description: Page title after click (if available)
         '400':
           description: Bad request
           content:
