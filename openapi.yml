@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Browser WebAPI
   description: A web API for browser automation using headless Chrome
-  version: 3.0.0
+  version: 3.0.1
   contact:
     name: Andrei Pestunov
     email: masterlifting@gmail.com
@@ -31,7 +31,7 @@ paths:
                     example: "ok"
                   version:
                     type: string
-                    example: "3.0.0"
+                    example: "3.0.1"
 
   /api/v1/tab/open:
     post:

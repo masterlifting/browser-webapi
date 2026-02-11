@@ -352,7 +352,8 @@ pub async fn humanize(tab_id: &str) -> Result<(), Error> {
 /// # Behavior
 ///
 /// - Resolves the tab by ID.
-/// - Captures a PNG screenshot with default parameters.
+/// - Captures a PNG screenshot for the tab.
+/// - Uses full-page mode to avoid clipped results.
 ///
 /// # Arguments
 ///
@@ -374,7 +375,7 @@ pub async fn screenshot(tab_id: &str) -> Result<Vec<u8>, Error> {
     .and_then(|page| async move {
       page
         .raw_page()
-        .screenshot(ScreenshotParams::builder().build())
+        .screenshot(ScreenshotParams::builder().full_page(true).build())
         .await
         .map_err(|e| {
           Error::Operation(ErrorInfo {

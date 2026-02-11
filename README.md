@@ -3,7 +3,7 @@ A robust web API service for browser automation using headless Chrome.
 
 This project provides a REST API to control Chrome programmatically for tasks like screenshots, PDF generation, content extraction, and form automation.
 
-Version: `3.0.0`
+Version: `3.0.1`
 
 ## Features
 
@@ -41,6 +41,14 @@ For fast testing use Docker Compose to run the application locally:
    ```bash
    docker-compose -f .docker/docker-compose.dev.yml down
    ```
+
+## Configuration
+
+Environment variables:
+
+- `SERVER_HOST` — bind host (default: `127.0.0.1`)
+- `SERVER_PORT` — bind port (default: `8080`)
+- `LOG_LEVEL` — tracing level/filter (default: `info`)
 
 ## API reference
 
