@@ -47,7 +47,7 @@ pub async fn run(browser: Arc<Browser>, mut handler: Handler) -> std::io::Result
       .max_age(3600);
 
     actix_web::App::new()
-      .wrap(Logger::new("%a \"%r\" %s %b \"%{Referer}i\" \"%{User-Agent}i\" %T").log_target("http"))
+      .wrap(Logger::new("%s \"%U\" \"%{User-Agent}i\" %T").log_target("http"))
       .wrap(cors)
       .app_data(web::Data::new(browser.clone()))
       .configure(crate::web_api::routes::configure)
