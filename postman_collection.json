@@ -11,7 +11,7 @@
 			"name": "tab",
 			"item": [
 				{
-					"name": "element",
+					"name": "interactions",
 					"item": [
 						{
 							"name": "click",
@@ -33,7 +33,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/click",
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/click",
 									"host": [
 										"{{base_url}}"
 									],
@@ -42,7 +42,6 @@
 										"v1",
 										"tabs",
 										"{{tab_id}}",
-										"element",
 										"click"
 									]
 						},
@@ -70,7 +69,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/exists",
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/exists",
 									"host": [
 										"{{base_url}}"
 									],
@@ -79,7 +78,6 @@
 										"v1",
 										"tabs",
 										"{{tab_id}}",
-										"element",
 										"exists"
 									]
 								},
@@ -107,7 +105,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/extract",
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/extract",
 									"host": [
 										"{{base_url}}"
 									],
@@ -116,7 +114,6 @@
 										"v1",
 										"tabs",
 										"{{tab_id}}",
-										"element",
 										"extract"
 									]
 								},
@@ -144,7 +141,7 @@
 									}
 								},
 								"url": {
-									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/element/execute",
+									"raw": "{{base_url}}/api/v1/tabs/{{tab_id}}/execute",
 									"host": [
 										"{{base_url}}"
 									],
@@ -153,7 +150,6 @@
 										"v1",
 										"tabs",
 										"{{tab_id}}",
-										"element",
 										"execute"
 									]
 								},

@@ -4,10 +4,8 @@ use actix_web::{HttpResponse, web};
 use chaser_oxide::Browser;
 use serde_json::json;
 
-use crate::browser::element;
-use crate::browser::element::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto};
 use crate::browser::tab;
-use crate::browser::tab::dto::{FillDto, OpenDto};
+use crate::browser::tab::dto::{ClickDto, ExecuteDto, ExistsDto, ExtractDto, FillDto, OpenDto};
 use crate::web_api::response;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
@@ -61,44 +59,37 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
                 response::from_image(tab::api::screenshot(&id).await)
               }),
             )
-            .service(
-              web::scope("/element")
-                .route(
-                  "/click",
-                  web::post().to(
-                    |req: web::Json<ClickDto>, id: web::Path<String>| async move {
-                      response::from_string(element::api::click(&id, req.into_inner()).await)
-                    },
-                  ),
-                )
-                .route(
-                  "/exists",
-                  web::post().to(
-                    |req: web::Json<ExistsDto>, id: web::Path<String>| async move {
-                      HttpResponse::Ok().body(
-                        element::api::exists(&id, req.into_inner())
-                          .await
-                          .to_string(),
-                      )
-                    },
-                  ),
-                )
-                .route(
-                  "/extract",
-                  web::post().to(
-                    |req: web::Json<ExtractDto>, id: web::Path<String>| async move {
-                      response::from_string(element::api::extract(&id, req.into_inner()).await)
-                    },
-                  ),
-                )
-                .route(
-                  "/execute",
-                  web::post().to(
-                    |req: web::Json<ExecuteDto>, id: web::Path<String>| async move {
-                      response::from_string(element::api::execute(&id, req.into_inner()).await)
-                    },
-                  ),
-                ),
+            .route(
+              "/click",
+              web::post().to(
+                |req: web::Json<ClickDto>, id: web::Path<String>| async move {
+                  response::from_string(tab::api::click(&id, req.into_inner()).await)
+                },
+              ),
+            )
+            .route(
+              "/exists",
+              web::post().to(
+                |req: web::Json<ExistsDto>, id: web::Path<String>| async move {
+                  HttpResponse::Ok().body(tab::api::exists(&id, req.into_inner()).await.to_string())
+                },
+              ),
+            )
+            .route(
+              "/extract",
+              web::post().to(
+                |req: web::Json<ExtractDto>, id: web::Path<String>| async move {
+                  response::from_string(tab::api::extract(&id, req.into_inner()).await)
+                },
+              ),
+            )
+            .route(
+              "/execute",
+              web::post().to(
+                |req: web::Json<ExecuteDto>, id: web::Path<String>| async move {
+                  response::from_string(tab::api::execute(&id, req.into_inner()).await)
+                },
+              ),
             ),
         ),
     )
