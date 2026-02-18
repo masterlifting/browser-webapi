@@ -92,8 +92,9 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
   fn schedule_auto_close(tab_id: String, expiration: u64) {
     tokio::spawn(async move {
       tokio::time::sleep(Duration::from_secs(expiration)).await;
-      if close(&tab_id).await.is_ok() {
-        tracing::info!("Tab {tab_id} expired after {expiration} seconds");
+      match close(&tab_id).await {
+        Ok(()) => tracing::info!("Tab {tab_id} expired after {expiration} seconds"),
+        Err(e) => tracing::warn!("Failed to auto-close tab {tab_id} after expiration: {e}"),
       }
     });
   }
@@ -107,7 +108,10 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
     })
   }
 
-  async fn create_new_tab(url: Url, browser: Arc<Browser>) -> Result<(ChaserPage, Url), Error> {
+  async fn create_new_tab(
+    url: Url,
+    browser: Arc<Browser>,
+  ) -> Result<(Arc<ChaserPage>, Url), Error> {
     browser
       .new_page("about:blank")
       .map_err(|e| {
@@ -117,36 +121,42 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
         })
       })
       .and_then(move |page| async move {
-        let chaser = ChaserPage::new(page);
+        let chaser = Arc::new(ChaserPage::new(page));
         let profile = ChaserProfile::linux().build();
 
-        chaser.apply_profile(&profile).await.map_err(|e| {
-          Error::Operation(ErrorInfo {
-            message: format!("Failed to apply stealth profile: {e}"),
-            code: None,
-          })
-        })?;
-
-        Ok((chaser, url))
+        match chaser.apply_profile(&profile).await {
+          Ok(()) => Ok((chaser, url)),
+          Err(e) => {
+            close_page(chaser).await?;
+            Err(Error::Operation(ErrorInfo {
+              message: format!("Failed to apply stealth profile: {e}"),
+              code: None,
+            }))
+          }
+        }
       })
       .await
   }
 
-  async fn navigate_to_url((chaser, url): (ChaserPage, Url)) -> Result<ChaserPage, Error> {
-    chaser.goto(url.as_str()).await.map_err(|e| {
-      Error::Operation(ErrorInfo {
-        message: format!("Failed to navigate to URL: {e}"),
-        code: None,
-      })
-    })?;
-
-    Ok(chaser)
+  async fn navigate_to_url(
+    (chaser, url): (Arc<ChaserPage>, Url),
+  ) -> Result<Arc<ChaserPage>, Error> {
+    match chaser.goto(url.as_str()).await {
+      Ok(()) => Ok(chaser),
+      Err(e) => {
+        close_page(chaser).await?;
+        Err(Error::Operation(ErrorInfo {
+          message: format!("Failed to navigate to URL: {e}"),
+          code: None,
+        }))
+      }
+    }
   }
 
-  async fn store_tab(page: ChaserPage) -> Result<String, Error> {
+  async fn store_tab(page: Arc<ChaserPage>) -> Result<String, Error> {
     let tab_id = Uuid::new_v4().to_string();
     let mut tabs = TABS.lock().await;
-    tabs.insert(tab_id.clone(), Arc::new(page));
+    tabs.insert(tab_id.clone(), page);
     Ok(tab_id)
   }
 
@@ -186,31 +196,39 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
 /// api::close(tab_id).await?;
 /// ```
 pub async fn close(tab_id: &str) -> Result<(), Error> {
-  async fn remove_tab(tab_id: &str) -> Result<(&str, Arc<ChaserPage>), Error> {
+  async fn remove_tab(tab_id: &str) -> Result<(String, Arc<ChaserPage>), Error> {
     TABS
       .lock()
       .await
       .remove(tab_id)
-      .map(|page| (tab_id, page))
+      .map(|page| (tab_id.to_string(), page))
       .ok_or_else(|| Error::NotFound(format!("tab_id {tab_id}")))
   }
 
   async fn get_cookies(
-    (tab_id, chaser): (&str, Arc<ChaserPage>),
-  ) -> Result<(&str, Vec<Cookie>, Arc<ChaserPage>), Error> {
-    let cookies = chaser.raw_page().get_cookies().await.map_err(|e| {
-      Error::Operation(ErrorInfo {
-        message: format!("Failed to get cookies: {e}"),
-        code: None,
-      })
-    })?;
-
-    Ok((tab_id, cookies, chaser))
+    (tab_id, chaser): (String, Arc<ChaserPage>),
+  ) -> Result<(String, Vec<Cookie>, Arc<ChaserPage>, Option<Error>), Error> {
+    match chaser.raw_page().get_cookies().await {
+      Ok(cookies) => Ok((tab_id, cookies, chaser, None)),
+      Err(e) => Ok((
+        tab_id,
+        Vec::new(),
+        chaser,
+        Some(Error::Operation(ErrorInfo {
+          message: format!("Failed to get cookies: {e}"),
+          code: None,
+        })),
+      )),
+    }
   }
 
   async fn clear_cookies(
-    (tab_id, cookies, chaser): (&str, Vec<Cookie>, Arc<ChaserPage>),
-  ) -> Result<Arc<ChaserPage>, Error> {
+    (tab_id, cookies, chaser, cookie_error): (String, Vec<Cookie>, Arc<ChaserPage>, Option<Error>),
+  ) -> Result<(Arc<ChaserPage>, Option<Error>), Error> {
+    if cookie_error.is_some() {
+      return Ok((chaser, cookie_error));
+    }
+
     let to_delete = cookies
       .iter()
       .map(|cookie| {
@@ -224,36 +242,37 @@ pub async fn close(tab_id: &str) -> Result<(), Error> {
       .collect::<Vec<_>>();
 
     if !to_delete.is_empty() {
-      chaser
-        .raw_page()
-        .delete_cookies(to_delete.clone())
-        .await
-        .map_err(|e| {
-          Error::Operation(ErrorInfo {
+      return match chaser.raw_page().delete_cookies(to_delete.clone()).await {
+        Ok(_) => {
+          tracing::info!("Deleted {} cookies for tab {}", to_delete.len(), tab_id);
+          Ok((chaser, None))
+        }
+        Err(e) => Ok((
+          chaser,
+          Some(Error::Operation(ErrorInfo {
             message: format!("Failed to delete cookies: {e}"),
             code: None,
-          })
-        })?;
-
-      tracing::info!("Deleted {} cookies for tab {}", to_delete.len(), tab_id);
+          })),
+        )),
+      };
     }
 
-    Ok(chaser)
+    Ok((chaser, None))
   }
 
-  async fn close_page(chaser: Arc<ChaserPage>) -> Result<(), Error> {
-    chaser.raw_page().clone().close().await.map_err(|e| {
-      Error::Operation(ErrorInfo {
-        message: format!("Failed to close tab: {e}"),
-        code: None,
-      })
-    })
+  async fn close_tab(
+    (chaser, cookie_error): (Arc<ChaserPage>, Option<Error>),
+  ) -> Result<(), Error> {
+    match cookie_error {
+      Some(cookie_error) => Err(cookie_error),
+      None => close_page(chaser).await,
+    }
   }
 
   remove_tab(tab_id)
     .and_then(get_cookies)
     .and_then(clear_cookies)
-    .and_then(close_page)
+    .and_then(close_tab)
     .await
 }
 
@@ -282,7 +301,11 @@ pub async fn close(tab_id: &str) -> Result<(), Error> {
 /// api::fill(tab_id, FillDto { inputs: vec![/* ... */] }).await?;
 /// ```
 pub async fn fill(tab_id: &str, dto: FillDto) -> Result<(), Error> {
-  async fn fill_input(chaser: Arc<ChaserPage>, selector: String, value: String) -> Result<(), Error> {
+  async fn fill_input(
+    chaser: Arc<ChaserPage>,
+    selector: String,
+    value: String,
+  ) -> Result<(), Error> {
     element::api::fill(chaser, selector.as_str(), value.as_str()).await
   }
 
@@ -385,4 +408,13 @@ pub async fn screenshot(tab_id: &str) -> Result<Vec<u8>, Error> {
         })
     })
     .await
+}
+
+async fn close_page(chaser: Arc<ChaserPage>) -> Result<(), Error> {
+  chaser.raw_page().clone().close().await.map_err(|e| {
+    Error::Operation(ErrorInfo {
+      message: format!("Failed to close tab: {e}"),
+      code: None,
+    })
+  })
 }
