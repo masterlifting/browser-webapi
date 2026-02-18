@@ -3,7 +3,7 @@ A robust web API service for browser automation using headless Chrome.
 
 This project provides a REST API to control Chrome programmatically for tasks like screenshots, PDF generation, content extraction, and form automation.
 
-Version: `3.0.1`
+Version: `4.0.0`
 
 ## Features
 
@@ -75,10 +75,10 @@ Import it into Postman (File → Import or drag-and-drop).
 | **POST** | `/api/v1/tabs/{id}/fill` | Fill selected inputs |
 | **GET** | `/api/v1/tabs/{id}/screenshot` | Get a PNG screenshot for a tab |
 | **POST** | `/api/v1/tabs/{id}/humanize` | Apply human-like behaviors to avoid detection |
-| **POST** | `/api/v1/tabs/{id}/element/click` | Click an element |
-| **POST** | `/api/v1/tabs/{id}/element/exists` | Check if element exists (returns "true"/"false") |
-| **POST** | `/api/v1/tabs/{id}/element/extract` | Extract text content from an element |
-| **POST** | `/api/v1/tabs/{id}/element/execute` | Execute JavaScript on an element or tab |
+| **POST** | `/api/v1/tabs/{id}/click` | Click an element |
+| **POST** | `/api/v1/tabs/{id}/exists` | Check if element exists (returns "true"/"false") |
+| **POST** | `/api/v1/tabs/{id}/extract` | Extract text content from an element |
+| **POST** | `/api/v1/tabs/{id}/execute` | Execute JavaScript on an element or tab |
 
 ## License
 

@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Browser WebAPI
   description: A web API for browser automation using headless Chrome
-  version: 3.0.1
+  version: 4.0.0
   contact:
     name: Andrei Pestunov
     email: masterlifting@gmail.com
@@ -31,7 +31,7 @@ paths:
                     example: "ok"
                   version:
                     type: string
-                    example: "3.0.1"
+                    example: "4.0.0"
 
   /api/v1/tab/open:
     post:
@@ -178,7 +178,7 @@ paths:
               schema:
                 type: string
 
-  /api/v1/tabs/{id}/element/click:
+  /api/v1/tabs/{id}/click:
     post:
       summary: Click an element
       description: Clicks an element in the specified tab and returns the page title
@@ -216,7 +216,7 @@ paths:
               schema:
                 type: string
 
-  /api/v1/tabs/{id}/element/exists:
+  /api/v1/tabs/{id}/exists:
     post:
       summary: Check if element exists
       description: Checks if an element exists in the specified tab
@@ -254,7 +254,7 @@ paths:
               schema:
                 type: string
 
-  /api/v1/tabs/{id}/element/extract:
+  /api/v1/tabs/{id}/extract:
     post:
       summary: Extract text content from element
       description: Extracts text content from an element in the specified tab. Returns an empty string if the element has no text content.
@@ -292,7 +292,7 @@ paths:
               schema:
                 type: string
 
-  /api/v1/tabs/{id}/element/execute:
+  /api/v1/tabs/{id}/execute:
     post:
       summary: Execute JavaScript on element or tab
       description: Executes JavaScript code on an element in the specified tab (if selector provided using `.this`) or on the tab itself (if no selector)
