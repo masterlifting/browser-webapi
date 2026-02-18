@@ -86,6 +86,31 @@ rm -f "$USER_DATA_DIR/SingletonLock"
 rm -f "$USER_DATA_DIR/SingletonCookie"
 rm -f "$USER_DATA_DIR/SingletonSocket"
 
+# Profile retention policy:
+# - prune-cache (default): remove common Chrome cache folders on startup
+# - preserve: keep all profile data
+# - reset: wipe the profile directory content on startup
+PROFILE_RETENTION_MODE="${PROFILE_RETENTION_MODE:-prune-cache}"
+case "$PROFILE_RETENTION_MODE" in
+  preserve)
+    ;;
+  prune-cache)
+    rm -rf "$USER_DATA_DIR/Default/Cache"
+    rm -rf "$USER_DATA_DIR/Default/Code Cache"
+    rm -rf "$USER_DATA_DIR/Default/GPUCache"
+    rm -rf "$USER_DATA_DIR/GrShaderCache"
+    rm -rf "$USER_DATA_DIR/ShaderCache"
+    rm -rf "$USER_DATA_DIR/Crashpad"
+    ;;
+  reset)
+    find "$USER_DATA_DIR" -mindepth 1 -maxdepth 1 -exec rm -rf {} +
+    ;;
+  *)
+    echo "Unknown PROFILE_RETENTION_MODE='$PROFILE_RETENTION_MODE' (expected preserve|prune-cache|reset)" >&2
+    exit 1
+    ;;
+esac
+
 Xvfb :99 -screen 0 1920x1080x24 -nolisten tcp -nolisten unix -ac &
 XVFB_PID=$!
 

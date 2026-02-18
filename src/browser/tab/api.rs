@@ -160,12 +160,12 @@ pub async fn open(browser: Arc<Browser>, dto: OpenDto) -> Result<String, Error> 
     Ok(tab_id)
   }
 
-  future::ready(parse_url(&dto.url))
+  future::ready(parse_url(dto.url.as_str()))
     .and_then(move |url| create_new_tab(url, browser))
     .and_then(navigate_to_url)
     .and_then(store_tab)
     .map_ok(|tab_id| {
-      schedule_auto_close(tab_id.clone(), dto.expiration);
+      schedule_auto_close(tab_id.clone(), dto.bounded_expiration());
       tab_id
     })
     .await
